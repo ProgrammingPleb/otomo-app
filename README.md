@@ -1,56 +1,53 @@
-# Welcome to your Expo app 👋
+<div align="center">
+   <img src="assets/images/github-icon.png" width="128">
+</div>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<h1 align="center">Otomo</h1>
+<p align="center">Yet another stream notification app. Because why not?</p>
 
-## Get started
+## About
+This is just a streaming notification app for now. Sometimes notifications from YouTube don't show up when streamers start streaming, and thus, this app does check streams on top of making use of newer operating system features.  
+As for now, the application is focused on members from NIJISANJI Project, with other streamers on the roadmap.
 
-1. Install dependencies
+## Getting Started
+### Prerequisites
+- [Holodex API Key](https://docs.holodex.net/#section/Getting-Started/Obtaining-API-Key)
+- Android 12 (or higher)
+> iOS support is not possible due to a lack of a macOS machine + Apple Developer account.
 
-   ```bash
-   npm install
-   ```
+### Installation
+You may get the latest release from [here](https://github.com/ProgrammingPleb/otomo-app/releases/latest).  
+Additionally, you may use applications such as [Obtainium](https://obtainium.imranr.dev/) and [Essentials](https://github.com/sameerasw/essentials) for automated updates through Shizuku.
+> That being said however, Google will start locking down on sideloading for certain regions starting on the 30th of September 2026, with the rest of the world from 2027. Read more about it [here](https://keepandroidopen.org/).
 
-2. Start the app
+## Roadmap
+- [ ] Add support to check for other streamers
+  - [ ] Research on other backup methods to fetch streaming status
+- [ ] Add streamer profile (for listing previous detected streams)
+- [ ] Add support to group streamers to their generation/group
 
-   ```bash
-   npx expo start
-   ```
+## Contributing
+Any contributions are widely appreciated! (although I won't expect any for this application)  
 
-In the output, you'll find options to open the app in a
+As stated within the `AGENTS.md` file, this project is meant to be **a human-made, hand written project**. Thus, I'd really appreciate it if the contributions themselves also follow this convention. Although AI makes things easier by dealing with boilerplate code and other things, I believe that (after being stuck in that phase of relying on AI) after a while you tend to not keep track of what they're doing, and thus, I'd like to keep this policy in place.  
+If you do read it however, using them as a learning tool may be permitted, as we humans do tend to maybe not be able to grasp certain conventions or concepts as easily (which is understandable). In that situation, having AI to explain why issues such as "why using `useEffect` here causes the application's navigation to bug out" with context to the codebase would immensely help in a way.  
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+To help contribute to the project, please do the following:  
+1. Fork the project
+2. Create a branch following the naming conventions [here](https://conventionalbranch.org/)
+3. Make your changes and commit them following the naming conventions [here](https://www.conventionalcommits.org/en/v1.0.0/)
+4. Push the changes to your branch
+5. Open a Pull Request
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+My available times are usually around 6:30pm to 12:00am GMT+8 time so I may reply late, so I do apologize for those in advance!
 
-## Get a fresh project
+## License
+This project is licensed under the `GNU GPLv3` license. Please read `LICENSE` for more information.
 
-When you're ready, run:
+## Contact
+If you need to reach me out privately, you may do so by emailing me at [dev@pleb.moe](mailto:dev@pleb.moe). I may take a while to respond back, so your patience is very much appreciated!
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Acknowledgement
+I'd like to thank these parties in making this application happen (either directly or indirectly):
+- Friends from the local NIJISANJI community
+- [Holodex](https://holodex.net) for their generosity in making their API open for others
