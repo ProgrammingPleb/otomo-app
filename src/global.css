@@ -10,3 +10,29 @@
     --font-otomo-bold: "OtomoSans-Bold";
     --font-otomo-extrabold: "OtomoSans-ExtraBold";
 }
+
+@layer theme {
+    :root {
+        @variant light {
+            --color-background: #fef7ff;
+            --color-on-background: #1d1b20;
+            --color-primary: #67558e;
+            --color-primary-container: #eaddff;
+            --color-on-primary-container: #4e3d75;
+            --color-surface-container: #f2ecf4;
+            --color-inverse-primary: #d1bcfd;
+            --color-outline: #7a757f;
+        }
+
+        @variant dark {
+            --color-background: #141218;
+            --color-on-background: #e7e0e8;
+            --color-primary: #d1bcfd;
+            --color-primary-container: #4e3d75;
+            --color-on-primary-container: #eaddff;
+            --color-surface-container: #211f24;
+            --color-inverse-primary: #67558e;
+            --color-outline: #948f99;
+        }
+    }
+}
