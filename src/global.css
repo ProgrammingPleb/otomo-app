@@ -1,2 +1,12 @@
 @import 'tailwindcss';
 @import 'uniwind';
+
+@theme {
+    --font-otomo-thin: "OtomoSans-Thin";
+    --font-otomo-light: "OtomoSans-Light";
+    --font-otomo: "OtomoSans-Regular";
+    --font-otomo-medium: "OtomoSans-Medium";
+    --font-otomo-semibold: "OtomoSans-SemiBold";
+    --font-otomo-bold: "OtomoSans-Bold";
+    --font-otomo-extrabold: "OtomoSans-ExtraBold";
+}
