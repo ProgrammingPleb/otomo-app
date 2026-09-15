@@ -17,6 +17,7 @@
             --color-background: #fef7ff;
             --color-on-background: #1d1b20;
             --color-primary: #67558e;
+            --color-on-primary: #ffffff;
             --color-primary-container: #eaddff;
             --color-on-primary-container: #4e3d75;
             --color-surface-container: #f2ecf4;
@@ -28,6 +29,7 @@
             --color-background: #141218;
             --color-on-background: #e7e0e8;
             --color-primary: #d1bcfd;
+            --color-on-primary: #37265c;
             --color-primary-container: #4e3d75;
             --color-on-primary-container: #eaddff;
             --color-surface-container: #211f24;

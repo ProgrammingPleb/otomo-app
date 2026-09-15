@@ -48,7 +48,9 @@
             "./assets/fonts/OtomoSans-ExtraBold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite",
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,
