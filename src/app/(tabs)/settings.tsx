@@ -31,17 +31,17 @@ export default function SettingsTab() {
   }, []);
 
   return (
-    <View className="flex-1 bg-background pt-safe">
+    <View className="flex-1 bg-surface pt-safe">
       <ScrollView className="flex-1 px-4">
         <View>
-          <Text className="text-on-background text-3xl" weight="bold">Settings</Text>
+          <Text className="text-on-surface text-3xl" weight="bold">Settings</Text>
           <Text className="text-primary">Set your preferences of the app here.</Text>
         </View>
         <View className="flex gap-2">
           <TextInput
             title="Holodex API Key"
-            titleClassName="text-on-background"
-            className="text-on-background"
+            titleClassName="text-on-surface"
+            className="text-on-surface"
             placeholder="Input Holodex API key here."
             hint="Use this to avoid rate limits."
             value={apiKey}
