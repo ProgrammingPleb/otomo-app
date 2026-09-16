@@ -6,7 +6,7 @@ import * as SQLite from "expo-sqlite";
 import { channelsTable, settingsTable, streamsTable } from "../../db/schema";
 
 export const DB_NAME = "otomo";
-export const expo = SQLite.openDatabaseSync(DB_NAME);
+export const expo = SQLite.openDatabaseSync(DB_NAME, { enableChangeListener: true });
 export const db = drizzle(expo);
 
 export async function getSettings() {
@@ -56,7 +56,7 @@ export async function refreshStreams(videos: HolodexVideo[]) {
         checkDate.setDate(checkDate.getDate() - 1);
         const dayStreamsRaw = await db.select({
             video_id: streamsTable.video_id
-        }).from(streamsTable).where(gte(streamsTable.time, checkDate.getTime() / 1000));
+        }).from(streamsTable).where(gte(streamsTable.time, checkDate.getTime()));
         const dayStreams = dayStreamsRaw.map((video) => video.video_id);
         const currentLivestreams = videos.map((video) => video.id);
         for (const video of dayStreams) {
@@ -87,7 +87,7 @@ export async function refreshStreams(videos: HolodexVideo[]) {
                 }
                 const epochTime = (video.start_actual != null ?
                     new Date(video.start_actual).getTime() :
-                    new Date(video.start_scheduled ?? 0).getTime()) / 1000;
+                    new Date(video.start_scheduled ?? 0).getTime());
                 await db.insert(streamsTable).values({
                     channel_id: channelId,
                     title: video.title,

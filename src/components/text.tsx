@@ -1,4 +1,5 @@
-import { Text } from "react-native";
+import { ReactNode } from "react";
+import { Text, TextProps } from "react-native";
 
 export const TextWeights = {
     thin: "font-otomo-thin",
@@ -10,14 +11,14 @@ export const TextWeights = {
     extrabold: "font-otomo-extrabold"
 }
 
-interface AppTextProps {
+interface AppTextProps extends TextProps {
     weight?: keyof typeof TextWeights;
     className?: string;
-    children: string;
+    children?: ReactNode;
 }
 
-export function AppText({ weight = "regular", className, children }: AppTextProps) {
+export function AppText({ weight = "regular", className, children, ...props }: AppTextProps) {
     return (
-        <Text className={`${className} ${TextWeights[weight]}`}>{children}</Text>
+        <Text className={`${className} ${TextWeights[weight]}`} {...props}>{children}</Text>
     )
 }
