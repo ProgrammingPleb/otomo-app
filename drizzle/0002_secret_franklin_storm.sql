@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `streams_video_id_unique` ON `streams` (`video_id`);

@@ -16,10 +16,11 @@ export const channelsTable = sqliteTable("channels", {
 
 export const streamsTable = sqliteTable("streams", {
     id: int().primaryKey({autoIncrement: true}),
-    channel_id: int().unique().notNull().references(() => channelsTable.id, { onDelete: "cascade" }),
+    channel_id: int().notNull().references(() => channelsTable.id, { onDelete: "cascade" }),
     title: text().notNull(),
-    video_id: text().notNull(),
-    time: text()
+    video_id: text().notNull().unique(),
+    time: int().notNull(),
+    ended: int().notNull()
 });
 
 export const favoritesTable = sqliteTable("favorites", {

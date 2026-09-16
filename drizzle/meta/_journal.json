@@ -8,6 +8,20 @@
       "when": 1789547718930,
       "tag": "0000_panoramic_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789569082188,
+      "tag": "0001_mean_mordo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789570575154,
+      "tag": "0002_secret_franklin_storm",
+      "breakpoints": true
     }
   ]
 }
