@@ -4,6 +4,7 @@ const { withUniwindConfig } = require('uniwind/metro');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
+config.resolver.sourceExts.push('sql');
 
 module.exports = withUniwindConfig(config, {  
   // relative path to your global.css file (from previous step)

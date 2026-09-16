@@ -4,11 +4,14 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.18",
+    "babel-plugin-inline-import": "^3.0.0",
+    "drizzle-orm": "^0.45.2",
     "expo": "~57.0.22",
     "expo-background-task": "~57.0.17",
     "expo-constants": "~57.0.18",
     "expo-dev-client": "~57.0.19",
     "expo-device": "~57.0.2",
+    "expo-drizzle-studio-plugin": "^0.2.1",
     "expo-font": "~57.0.4",
     "expo-glass-effect": "~57.0.3",
     "expo-image": "~57.0.5",
@@ -35,6 +38,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "drizzle-kit": "^0.31.10",
     "typescript": "~6.0.3"
   },
   "scripts": {
