@@ -1,4 +1,4 @@
-import { HolodexVideo } from "@/model/holodex";
+import { HolodexChannel, HolodexVideo } from "@/model/holodex";
 import { SettingsData } from "@/model/settings";
 import { eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -104,5 +104,29 @@ export async function refreshStreams(videos: HolodexVideo[]) {
         console.error("DB: Unable to set streams!", e);
     } finally {
         console.log("Added all streams!");
+    }
+}
+
+export async function refreshChannels(channels: HolodexChannel[]) {
+    try {
+        for (const channel of channels) {
+            await db.insert(channelsTable).values({
+                youtube_id: channel.id,
+                name: channel.name,
+                profile_picture: channel.photo ?? "",
+                group_name: channel.group ? channel.group.replace("EN ", "") : "N/A",
+            }).onConflictDoUpdate({
+                target: channelsTable.youtube_id,
+                set: {
+                    name: channel.name,
+                    profile_picture: channel.photo ?? "",
+                    group_name: channel.group ? channel.group.replace("EN ", "") : "N/A",
+                }
+            });
+        }
+    } catch (e) {
+        console.error("DB: Unable to set channels!", e);
+    } finally {
+        console.log("Added all channels!");
     }
 }
