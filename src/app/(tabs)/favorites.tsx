@@ -8,7 +8,7 @@ import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
 import Animated, { useAnimatedScrollHandler, useSharedValue, withSpring } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
 import { useCSSVariable } from "uniwind";
@@ -18,6 +18,7 @@ const SCROLL_THRESHOLD = 4;
 
 export default function FavoritesTab() {
   const router = useRouter();
+  const secondary = useCSSVariable("--color-secondary") as string;
   const onTertiary = useCSSVariable("--color-on-tertiary") as string;
   const { data: favoritesData } = useLiveQuery(
     db.select().from(favoritesTable)
@@ -42,7 +43,7 @@ export default function FavoritesTab() {
 
     return Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]));
   }, [favoritesData]);
-  
+
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       "worklet";
@@ -87,7 +88,11 @@ export default function FavoritesTab() {
                 <View className="flex-1 gap-4 mt-7 px-4 pt-8 pb-6 outline outline-outline-variant rounded-md">
                   {
                     group[1].map((row) =>
-                      <View key={`${group[0]} Favorite: ${row.channels!.name}`} className="flex-1 flex-row items-center gap-4 bg-secondary-container px-4 py-3 rounded-md">
+                      <Pressable key={`${group[0]} Favorite: ${row.channels!.name}`}
+                        className="flex-1 flex-row items-center gap-4 bg-secondary-container px-4 py-3 rounded-md"
+                        android_ripple={{ color: `${secondary}55` }}
+                        onPress={async () => await Linking.openURL(`https://www.youtube.com/channel/${row.channels!.youtube_id}`)}
+                      >
                         <View className="w-12 aspect-square">
                           <Image
                             className="flex-1 rounded-full"
@@ -96,7 +101,7 @@ export default function FavoritesTab() {
                           />
                         </View>
                         <Text className="text-on-secondary-container text-lg" weight="semibold">{row.channels!.name.replace(channelRegex, "")}</Text>
-                      </View>
+                      </Pressable>
                     )
                   }
                 </View>
