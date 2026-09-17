@@ -11,7 +11,8 @@ export const channelsTable = sqliteTable("channels", {
     youtube_id: text().notNull().unique(),
     name: text().notNull(),
     profile_picture: text().notNull(),
-    group_name: text()
+    group_name: text(),
+    inactive: int().notNull()
 });
 
 export const streamsTable = sqliteTable("streams", {

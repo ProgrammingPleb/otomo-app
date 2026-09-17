@@ -3,7 +3,7 @@ import { SettingsData } from "@/model/settings";
 import { eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as SQLite from "expo-sqlite";
-import { channelsTable, settingsTable, streamsTable } from "../../db/schema";
+import { channelsTable, favoritesTable, settingsTable, streamsTable } from "../../db/schema";
 
 export const DB_NAME = "otomo";
 export const expo = SQLite.openDatabaseSync(DB_NAME, { enableChangeListener: true });
@@ -81,7 +81,8 @@ export async function refreshStreams(videos: HolodexVideo[]) {
                         youtube_id: video.channel.id,
                         name: video.channel.name,
                         profile_picture: video.channel.photo,
-                        group_name: video.channel.suborg.slice(2).replace("EN ", "")
+                        group_name: video.channel.suborg.slice(2).replace("EN ", ""),
+                        inactive: 0
                     }).returning({ insertedId: channelsTable.id });
                     channelId = channelAddResp[0].insertedId ?? 0;
                 }
@@ -115,12 +116,14 @@ export async function refreshChannels(channels: HolodexChannel[]) {
                 name: channel.name,
                 profile_picture: channel.photo ?? "",
                 group_name: channel.group ? channel.group.replace("EN ", "") : "N/A",
+                inactive: channel.inactive ? 1 : 0,
             }).onConflictDoUpdate({
                 target: channelsTable.youtube_id,
                 set: {
                     name: channel.name,
                     profile_picture: channel.photo ?? "",
                     group_name: channel.group ? channel.group.replace("EN ", "") : "N/A",
+                    inactive: channel.inactive ? 1 : 0,
                 }
             });
         }
@@ -128,5 +131,19 @@ export async function refreshChannels(channels: HolodexChannel[]) {
         console.error("DB: Unable to set channels!", e);
     } finally {
         console.log("Added all channels!");
+    }
+}
+
+export async function updateFavorites(channelId: number, action: "add" | "remove") {
+    try {
+        if (action === "add") {
+            await db.insert(favoritesTable).values({
+                channel_id: channelId
+            });
+        } else if (action === "remove") {
+            await db.delete(favoritesTable).where(eq(favoritesTable.channel_id, channelId));
+        }
+    } catch (e) {
+        console.error("DB: Unable to set favorites!", e);
     }
 }

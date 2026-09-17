@@ -2,8 +2,8 @@ import { AppTextInput as TextInput } from "@/components/input";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { SettingsData } from "@/model/settings";
-import { getSettings, refreshStreams, setSettings } from "@/utils/db";
-import { getLatestVideos } from "@/utils/fetch";
+import { getSettings, refreshChannels, setSettings } from "@/utils/db";
+import { getLatestChannels } from "@/utils/fetch";
 import { SymbolView } from "expo-symbols";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -13,7 +13,7 @@ export default function SettingsTab() {
   const onPrimary = useCSSVariable("--color-on-primary") as string;
   const onPrimaryContainer = useCSSVariable("--color-on-primary-container") as string;
   const inversePrimary = useCSSVariable("--color-inverse-primary") as string;
-  const originalSettings = useRef<SettingsData>({apiKey: ""});
+  const originalSettings = useRef<SettingsData>({ apiKey: "" });
 
   const [apiKey, setApiKey] = useState("");
 
@@ -68,10 +68,10 @@ export default function SettingsTab() {
           </Pressable>
           <Pressable
             className={`flex flex-row gap-1 bg-primary self-start px-4 py-2.5 rounded-md`}
-            android_ripple={needsSave() ? { color: inversePrimary } : undefined}
+            android_ripple={{ color: `${inversePrimary}55` }}
             onPress={async () => {
-              const videos = await getLatestVideos();
-              await refreshStreams(videos);
+              const channels = await getLatestChannels();
+              await refreshChannels(channels);
             }}
           >
             <SymbolView
@@ -80,7 +80,7 @@ export default function SettingsTab() {
                 android: "refresh"
               }}
             />
-            <Text weight="semibold" className="text-on-primary">Refresh Current Streams</Text>
+            <Text weight="semibold" className="text-on-primary">Refresh Current Channels</Text>
           </Pressable>
         </View>
       </ScrollView>
