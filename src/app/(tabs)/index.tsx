@@ -4,7 +4,7 @@ import '@/global.css';
 import { db, refreshStreams } from "@/utils/db";
 import { getLatestVideos } from "@/utils/fetch";
 import { format } from "date-fns";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, notLike } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useCallback, useState } from "react";
 import { Linking, Pressable, RefreshControl, ScrollView, View } from "react-native";
@@ -15,7 +15,19 @@ export default function HomeTab() {
   const primary = useCSSVariable("--color-primary") as string;
   const onPrimary = useCSSVariable("--color-on-primary") as string;
   const secondary = useCSSVariable("--color-secondary") as string;
-  const { data } = useLiveQuery(db.select().from(streamsTable).leftJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id)).where(eq(streamsTable.ended, 0)));
+  const { data } = useLiveQuery(
+    db.select().from(streamsTable)
+      .leftJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id))
+      .where(
+        and(
+          eq(streamsTable.ended, 0),  // Filter the streams that have ended
+          and(
+            notLike(streamsTable.title, "%Station"),  // Filter streams that are stations
+            gte(streamsTable.time, new Date().getTime() - (3 * 24 * 60 * 60 * 1000))   // but make sure only ones that are confirmed to be stations (stream longer than 3 days)
+          )
+        )
+      )
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   const refreshStreamsList = useCallback(async () => {
@@ -26,7 +38,7 @@ export default function HomeTab() {
   }, []);
 
   return (
-    <View className="flex-1 bg-surface pt-safe">
+    <View className="flex-1 bg-surface pt-safe overflow-hidden">
       <ScrollView
         className="flex-1 px-4"
         refreshControl={
@@ -39,10 +51,16 @@ export default function HomeTab() {
       >
         <View>
           <Text className="text-on-surface text-3xl" weight="bold">Home</Text>
-          <Text className="text-primary">Ongoing Live Streams: {data.length.toString()}</Text>
+          <Text className="text-primary">
+            {
+              "Live Streams: " +
+              `${data.filter(({ streams }) => streams.time < new Date().getTime()).length.toString()} live, ` +
+              `${data.filter(({ streams }) => streams.time > new Date().getTime()).length.toString()} upcoming`
+            }
+          </Text>
         </View>
         <View
-          className="flex-1 gap-2"
+          className="flex-1 gap-2 pb-4"
         >
           {
             data.sort((a, b) => a.streams.time - b.streams.time).map((video) => {

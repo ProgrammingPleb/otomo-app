@@ -81,7 +81,7 @@ export async function refreshStreams(videos: HolodexVideo[]) {
                         youtube_id: video.channel.id,
                         name: video.channel.name,
                         profile_picture: video.channel.photo,
-                        group_name: video.channel.suborg
+                        group_name: video.channel.suborg.slice(2).replace("EN ", "")
                     }).returning({ insertedId: channelsTable.id });
                     channelId = channelAddResp[0].insertedId ?? 0;
                 }

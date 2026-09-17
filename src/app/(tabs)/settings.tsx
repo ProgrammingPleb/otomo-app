@@ -49,11 +49,11 @@ export default function SettingsTab() {
           />
           <Pressable
             className={`flex flex-row gap-1 ${needsSave() ? "bg-primary" : "bg-primary-container opacity-60"} self-start px-4 py-2.5 rounded-md`}
-            android_ripple={needsSave() ? { color: inversePrimary } : undefined}
+            android_ripple={needsSave() ? { color: `${inversePrimary}55` } : undefined}
             onPress={() => {
               if (needsSave()) {
-                setSettings({apiKey: apiKey}).then(() => {
-                  originalSettings.current = {apiKey: apiKey};
+                setSettings({ apiKey: apiKey }).then(() => {
+                  originalSettings.current = { apiKey: apiKey };
                 });
               }
             }}
