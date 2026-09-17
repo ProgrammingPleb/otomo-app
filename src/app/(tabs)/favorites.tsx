@@ -7,12 +7,14 @@ import { eq } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useCallback, useRef, useState } from "react";
-import { NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, View } from "react-native";
+import { useCallback, useState } from "react";
+import { Pressable, View } from "react-native";
+import Animated, { useAnimatedScrollHandler, useSharedValue, withSpring } from "react-native-reanimated";
+import { runOnJS } from "react-native-worklets";
 import { useCSSVariable } from "uniwind";
 import { channelsTable, favoritesTable } from "../../../db/schema";
 
-export const SCROLL_THRESHOLD = 4;
+const SCROLL_THRESHOLD = 4;
 
 export default function FavoritesTab() {
   const router = useRouter();
@@ -22,7 +24,8 @@ export default function FavoritesTab() {
       .leftJoin(channelsTable, eq(channelsTable.id, favoritesTable.channel_id))
   );
   const [fabVisible, setFabVisible] = useState(true);
-  const lastScroll = useRef(0);
+  const fabOpacity = useSharedValue(100);
+  const lastScroll = useSharedValue(0);
 
   const splitGroups = useCallback(() => {
     let data: { [key: string]: typeof favoritesData } = {};
@@ -39,26 +42,32 @@ export default function FavoritesTab() {
 
     return Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]));
   }, [favoritesData]);
+  
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      "worklet";
+      const scroll = event.contentOffset.y;
 
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const scroll = event.nativeEvent.contentOffset.y;
-    
-    if (scroll <= 0) {
-      setFabVisible(true);
-      lastScroll.current = scroll;
-      return;
-    }
+      if (scroll <= 0) {
+        fabOpacity.value = withSpring(100);
+        runOnJS(setFabVisible)(true);
+        lastScroll.value = scroll;
+        return;
+      }
 
-    const diff = scroll - lastScroll.current;
-    if (Math.abs(diff) > SCROLL_THRESHOLD) {
-      setFabVisible(diff < 0);
-      lastScroll.current = scroll;
+      const diff = scroll - lastScroll.value;
+      if (Math.abs(diff) > SCROLL_THRESHOLD) {
+        const visible = diff < 0;
+        fabOpacity.value = withSpring(visible ? 100 : 0);
+        runOnJS(setFabVisible)(visible);
+        lastScroll.value = scroll;
+      }
     }
-  }, []);
+  });
 
   return (
     <View className="flex-1 bg-surface pt-safe overflow-hidden">
-      <ScrollView className="flex-1 px-4" onScroll={handleScroll}>
+      <Animated.ScrollView className="flex-1 px-4" onScroll={handleScroll}>
         <View>
           <Text className="text-on-surface text-3xl" weight="bold">Favorites</Text>
           <Text className="text-primary">Show off your oshi list!</Text>
@@ -95,23 +104,25 @@ export default function FavoritesTab() {
             )
           }
         </View>
-      </ScrollView >
-      <Pressable
-        className={`absolute flex-1 flex-row items-center gap-2 rounded-md bottom-4 right-4 pl-3 pr-4 py-3 bg-tertiary transition-opacity duration-200 ${fabVisible ? "opacity-100" : "opacity-0"}`}
-        pointerEvents={fabVisible ? "auto" : "none"}
-        android_ripple={{ color: `${onTertiary}55` }}
-        onPress={() => {
-          router.push("/add_favorites");
-        }}
-      >
-        <SymbolView
-          tintColor={onTertiary}
-          name={{
-            android: "add"
+      </Animated.ScrollView>
+      <Animated.View style={{ opacity: fabOpacity }}>
+        <Pressable
+          className={`absolute flex-1 flex-row items-center gap-2 rounded-md bottom-4 right-4 pl-3 pr-4 py-3 bg-tertiary`}
+          pointerEvents={fabVisible ? "auto" : "none"}
+          android_ripple={{ color: `${onTertiary}55` }}
+          onPress={() => {
+            router.push("/add_favorites");
           }}
-        />
-        <Text className="text-on-tertiary" weight="semibold">Add</Text>
-      </Pressable>
+        >
+          <SymbolView
+            tintColor={onTertiary}
+            name={{
+              android: "add"
+            }}
+          />
+          <Text className="text-on-tertiary" weight="semibold">Add</Text>
+        </Pressable>
+      </Animated.View>
     </View >
   );
 }
