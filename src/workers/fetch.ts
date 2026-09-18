@@ -1,12 +1,38 @@
-import { getConnection } from "@/utils/db";
+import { refreshChannels, refreshStreams } from "@/utils/db";
+import { getLatestChannels, getLatestVideos } from "@/utils/fetch";
+import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from "expo-task-manager";
 
-export const FETCH_TASK_IDENTIFIER = "data-fetch";
+const FETCH_TASK_IDENTIFIER = "data-fetch";
 
 TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => {
     try {
-        const db = await getConnection();
+        const videos = await getLatestVideos();
+        if (videos) {
+            await refreshStreams(videos);
+        }
+
+        const channels = await getLatestChannels();
+        if (channels) {
+            await refreshChannels(channels);
+        }
+        return BackgroundTask.BackgroundTaskResult.Success;
     } catch (e) {
         console.error("Data Fetch (BG): Unable to fetch the latest data!", e);
+        return BackgroundTask.BackgroundTaskResult.Failed;
     }
-})
+});
+
+export async function registerBackgroundDataFetch() {
+    return BackgroundTask.registerTaskAsync(FETCH_TASK_IDENTIFIER, {
+        minimumInterval: 30
+    });
+}
+
+export async function unregisterBackgroundDataFetch() {
+    return BackgroundTask.unregisterTaskAsync(FETCH_TASK_IDENTIFIER);
+}
+
+export async function isBackgroundDataFetchActive() {
+    return await TaskManager.isTaskRegisteredAsync(FETCH_TASK_IDENTIFIER);
+}

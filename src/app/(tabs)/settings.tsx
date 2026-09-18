@@ -1,11 +1,13 @@
 import { AppTextInput as TextInput } from "@/components/input";
+import { SettingsSwitch } from "@/components/settings";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { SettingsData } from "@/model/settings";
 import { getSettings, refreshChannels, setSettings } from "@/utils/db";
 import { getLatestChannels } from "@/utils/fetch";
+import { isBackgroundDataFetchActive, registerBackgroundDataFetch, unregisterBackgroundDataFetch } from "@/workers/fetch";
 import { SymbolView } from "expo-symbols";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 
@@ -16,6 +18,7 @@ export default function SettingsTab() {
   const originalSettings = useRef<SettingsData>({ apiKey: "" });
 
   const [apiKey, setApiKey] = useState("");
+  const [dataFetchActive, setDataFetchActive] = useState(false);
 
   function needsSave() {
     const settings = originalSettings.current;
@@ -23,11 +26,23 @@ export default function SettingsTab() {
     return apiKey != settings.apiKey;
   }
 
+  const handleToggleBackgroundDataFetch = useCallback(async (enable: boolean) => {
+    if (enable) {
+      await registerBackgroundDataFetch();
+    } else {
+      await unregisterBackgroundDataFetch();
+    }
+    setDataFetchActive(enable);
+  }, []);
+
   useEffect(() => {
     getSettings().then((settings) => {
       originalSettings.current = settings;
       setApiKey(settings.apiKey);
     });
+    isBackgroundDataFetchActive().then((active) => {
+      setDataFetchActive(active);
+    })
   }, []);
 
   return (
@@ -71,7 +86,9 @@ export default function SettingsTab() {
             android_ripple={{ color: `${inversePrimary}55` }}
             onPress={async () => {
               const channels = await getLatestChannels();
-              await refreshChannels(channels);
+              if (channels) {
+                await refreshChannels(channels);
+              }
             }}
           >
             <SymbolView
@@ -82,6 +99,12 @@ export default function SettingsTab() {
             />
             <Text weight="semibold" className="text-on-primary">Refresh Current Channels</Text>
           </Pressable>
+          <SettingsSwitch
+          title="Background Refresh"
+          description="Refresh streams even when the app is closed."
+          value={dataFetchActive}
+          onValueChange={handleToggleBackgroundDataFetch}
+          />
         </View>
       </ScrollView>
     </View>

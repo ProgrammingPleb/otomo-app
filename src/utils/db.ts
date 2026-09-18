@@ -3,11 +3,47 @@ import { SettingsData } from "@/model/settings";
 import { eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as SQLite from "expo-sqlite";
-import { channelsTable, favoritesTable, settingsTable, streamsTable } from "../../db/schema";
+import { channelsTable, favoritesTable, lastCheckedTable, settingsTable, streamsTable } from "../../db/schema";
 
 export const DB_NAME = "otomo";
 export const expo = SQLite.openDatabaseSync(DB_NAME, { enableChangeListener: true });
 export const db = drizzle(expo);
+
+export async function isRefreshPossible(name: string) {
+    const currentTimeMillis = new Date().getTime();
+
+    try {
+        const timeCheck = await db.select({ time: lastCheckedTable.time })
+            .from(lastCheckedTable).where(eq(lastCheckedTable.name, name));
+        if (timeCheck.length > 0 && timeCheck[0].time < currentTimeMillis) {    // If exists, then check if the time has passed.
+            return true;
+        }
+        if (timeCheck.length < 1) {     // If does not exist, assume no checks for this action yet.
+            return true;
+        }
+    } catch (e) {
+        console.error(`DB: Unable to get last checked date for "${name}"`, e);
+    }
+
+    return false;
+}
+
+export async function updateLastCheckedTime(name: string, timeoutHours: number) {
+    const currentTimeMillis = new Date().getTime();
+    const timeoutMillis = timeoutHours * 60 * 60 * 1000;
+
+    try {
+        await db.insert(lastCheckedTable).values({
+            name: name,
+            time: currentTimeMillis + timeoutMillis
+        }).onConflictDoUpdate({
+            target: lastCheckedTable.name,
+            set: { time: currentTimeMillis + timeoutMillis }
+        });
+    } catch (e) {
+        console.error("DB: Unable to get settings!", e);
+    }
+}
 
 export async function getSettings() {
     const settings: SettingsData = {

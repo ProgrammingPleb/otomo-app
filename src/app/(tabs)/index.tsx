@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { and, eq, gte, notLike } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { SymbolView } from "expo-symbols";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Linking, Pressable, RefreshControl, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 import { channelsTable, favoritesTable, streamsTable } from "../../../db/schema";
@@ -39,11 +39,21 @@ export default function HomeTab() {
     ), [streamsData, favoritedChannels]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const refreshStreamsList = useCallback(async () => {
-    setRefreshing(true);
+  const refreshStreamsList = useCallback(async (showRefreshing: boolean) => {
+    if (showRefreshing) {
+      setRefreshing(true);
+    }
     const videos = await getLatestVideos();
-    await refreshStreams(videos);
-    setRefreshing(false);
+    if (videos) {
+      await refreshStreams(videos);
+    }
+    if (showRefreshing) {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshStreamsList(false);
   }, []);
 
   return (
@@ -126,7 +136,7 @@ export default function HomeTab() {
         }
         refreshControl={
           <RefreshControl
-            refreshing={refreshing} onRefresh={refreshStreamsList}
+            refreshing={refreshing} onRefresh={() => refreshStreamsList(true)}
             colors={[onPrimary]}
             progressBackgroundColor={primary}
           />

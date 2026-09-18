@@ -28,3 +28,9 @@ export const favoritesTable = sqliteTable("favorites", {
     id: int().primaryKey({autoIncrement: true}),
     channel_id: int().unique().notNull().references(() => channelsTable.id, { onDelete: "cascade" })
 });
+
+export const lastCheckedTable = sqliteTable("last_checked", {
+    id: int().primaryKey({ autoIncrement: true }),
+    name: text().notNull().unique(),
+    time: int().notNull()
+})
