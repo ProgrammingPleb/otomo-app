@@ -27,6 +27,7 @@ export default function FavoritesTab() {
   const [fabVisible, setFabVisible] = useState(true);
   const fabOpacity = useSharedValue(100);
   const lastScroll = useSharedValue(0);
+  const [titleHeight, setTitleHeight] = useState(0);
 
   const splitGroups = useCallback(() => {
     let data: { [key: string]: typeof favoritesData } = {};
@@ -79,13 +80,19 @@ export default function FavoritesTab() {
             splitGroups().map((group) =>
               <View className="relative" key={`Favorited Group - ${group[0]}`}>
                 <View className="left-1/2 -translate-x-1/2 absolute z-10">
-                  <View className="px-4 bg-surface">
+                  <View className="px-4 bg-surface" onLayout={(event) => {
+                    if (titleHeight === 0) {
+                      setTitleHeight(event.nativeEvent.layout.height);
+                    }
+                  }}>
                     <View className="self-start px-4 py-3 rounded-md bg-tertiary-container">
                       <Text className="text-on-tertiary-container text-lg" weight="bold">{group[0]}</Text>
                     </View>
                   </View>
                 </View>
-                <View className="flex-1 gap-4 mt-7 px-4 pt-8 pb-6 outline outline-outline-variant rounded-md">
+                <View className="flex-1 gap-4 px-4 pt-9 pb-6 outline outline-outline-variant rounded-md"
+                  style={{marginTop: titleHeight / 2}}
+                >
                   {
                     group[1].map((row) =>
                       <Pressable key={`${group[0]} Favorite: ${row.channels!.name}`}
