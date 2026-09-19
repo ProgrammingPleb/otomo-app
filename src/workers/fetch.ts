@@ -1,5 +1,5 @@
 import { refreshChannels, refreshStreams } from "@/utils/db";
-import { getLatestChannels, getLatestVideos } from "@/utils/fetch";
+import { getLatestChannels, getLatestVideos, getOneChannel } from "@/utils/fetch";
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from "expo-task-manager";
 
@@ -9,7 +9,7 @@ TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => {
     try {
         const videos = await getLatestVideos();
         if (videos) {
-            await refreshStreams(videos);
+            await refreshStreams(videos, async (channelId) => await getOneChannel(channelId));
         }
 
         const channels = await getLatestChannels();

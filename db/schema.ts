@@ -10,9 +10,12 @@ export const channelsTable = sqliteTable("channels", {
     id: int().primaryKey({autoIncrement: true}),
     youtube_id: text().notNull().unique(),
     name: text().notNull(),
+    romaji: text(),
     profile_picture: text().notNull(),
     group_name: text(),
-    inactive: int().notNull()
+    inactive: int().notNull(),
+    is_group_channel: int().notNull(),
+    organization: text().notNull()
 });
 
 export const streamsTable = sqliteTable("streams", {

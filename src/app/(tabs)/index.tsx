@@ -2,7 +2,7 @@ import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { db, refreshStreams } from "@/utils/db";
-import { getLatestVideos } from "@/utils/fetch";
+import { getLatestVideos, getOneChannel } from "@/utils/fetch";
 import { format } from "date-fns";
 import { and, eq, gte, notLike } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
@@ -45,7 +45,7 @@ export default function HomeTab() {
     }
     const videos = await getLatestVideos();
     if (videos) {
-      await refreshStreams(videos);
+      await refreshStreams(videos, async (channelId) => await getOneChannel(channelId));
     }
     if (showRefreshing) {
       setRefreshing(false);

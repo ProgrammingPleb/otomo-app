@@ -1,5 +1,4 @@
 import { Image } from "@/components/image";
-import { channelRegex } from "@/components/streamer";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { db } from "@/utils/db";
@@ -107,7 +106,13 @@ export default function FavoritesTab() {
                             contentFit="cover"
                           />
                         </View>
-                        <Text className="text-on-secondary-container text-lg" weight="semibold">{row.channels!.name.replace(channelRegex, "")}</Text>
+                        <View>
+                          <Text className="text-on-secondary-container text-lg" weight="semibold">{row.channels!.name}</Text>
+                          {
+                            row.channels!.romaji &&
+                            <Text className="-mt-1 opacity-60 text-on-secondary-container">{row.channels!.romaji}</Text>
+                          }
+                        </View>
                       </Pressable>
                     )
                   }

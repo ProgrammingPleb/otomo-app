@@ -1,4 +1,5 @@
-import { HolodexChannel, HolodexChannelsEndpointOptions, HolodexGeneralQuery, HolodexLiveEndpointOptions, HolodexVideo } from "@/model/holodex";
+import { BackendChannel } from "@/model/backend";
+import { HolodexGeneralQuery, HolodexLiveEndpointOptions, HolodexVideo } from "@/model/holodex";
 import { getSettings, isRefreshPossible, updateLastCheckedTime } from "./db";
 
 const STREAMS_BUFFER_NAME = "streams";
@@ -12,7 +13,7 @@ const CHANNELS_BUFFER_HOURS = 4;
  * @param endpoint The V2 API endpoint, starting with `/`.
  * @returns Returned data from the endpoint.
  */
-async function fetchData<T = unknown>(endpoint: string, options?: HolodexGeneralQuery) {
+async function fetchHolodexData<T = unknown>(endpoint: string, options?: HolodexGeneralQuery) {
     const apiKey = (await getSettings()).apiKey;
     if (apiKey == "") {
         return;
@@ -46,6 +47,22 @@ async function fetchData<T = unknown>(endpoint: string, options?: HolodexGeneral
 }
 
 /**
+ * Fetches data from the backend endpoint.  
+ * Returns `T` if data is received, `undefined` if it has errored out or no data was received.
+ * @param endpoint The V1 API endpoint, starting with `/`.
+ * @returns Returned data from the endpoint.
+ */
+async function fetchBackendData<T = unknown>(endpoint: string) {
+    const resp = await fetch(`http://main-server:3000/api/v1${endpoint}`);
+
+    if (resp.ok) {
+        return await resp.json() as T;
+    } else {
+        return;
+    }
+}
+
+/**
  * Fetches all upcoming and current live streams. Does not contain streams that have already ended.
  * @returns All upcoming and current live streams. `undefined` if checked too recently (within 15 minutes).
  */
@@ -54,7 +71,7 @@ export async function getLatestVideos() {
         return;
     }
 
-    const data = await fetchData<HolodexVideo[]>("/live", {
+    const data = await fetchHolodexData<HolodexVideo[]>("/live", {
         org: "Nijisanji",
         status: ["live", "upcoming"]
     } as HolodexLiveEndpointOptions);
@@ -68,30 +85,26 @@ export async function getLatestVideos() {
  * @returns All channels. `undefined` if checked too recently (within 4 hours).
  */
 export async function getLatestChannels() {
+    /* if (!await isRefreshPossible(CHANNELS_BUFFER_NAME)) {
+        return;
+    } */
+
+    const channels = await fetchBackendData<BackendChannel[]>("/channels");
+
+    await updateLastCheckedTime(CHANNELS_BUFFER_NAME, CHANNELS_BUFFER_HOURS);
+    return channels;
+}
+
+/**
+ * Fetches one channel based on their 
+ * @returns The channel's data. `undefined` if not found.
+ */
+export async function getOneChannel(channelId: string) {
     if (!await isRefreshPossible(CHANNELS_BUFFER_NAME)) {
         return;
     }
 
-    const channels: HolodexChannel[] = [];
+    const channels = await fetchBackendData<BackendChannel>(`/channels/${channelId}`);
 
-    let offset = 0;
-    while (true) {
-        const resp = await fetchData<HolodexChannel[]>("/channels", {
-            org: "Nijisanji",
-            limit: 50,
-            offset: offset,
-            type: "vtuber"
-        } as HolodexChannelsEndpointOptions);
-        offset += 50;
-
-        if (resp !== undefined) {
-            channels.push(...resp);
-        }
-        if (resp === undefined || resp.length < 50) {
-            break;
-        }
-    }
-
-    await updateLastCheckedTime(CHANNELS_BUFFER_NAME, CHANNELS_BUFFER_HOURS);
     return channels;
 }

@@ -1,4 +1,5 @@
-import { HolodexChannel, HolodexVideo } from "@/model/holodex";
+import { BackendChannel } from "@/model/backend";
+import { HolodexVideo } from "@/model/holodex";
 import { SettingsData } from "@/model/settings";
 import { eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -85,7 +86,10 @@ export async function setSettings(settings: SettingsData) {
     }
 }
 
-export async function refreshStreams(videos: HolodexVideo[]) {
+export async function refreshStreams(
+    videos: HolodexVideo[],
+    onChannelNotFound: (channelId: string) => Promise<BackendChannel | undefined>
+) {
     try {
         // Check for streams not in the current list and assume they have ended
         const checkDate = new Date();
@@ -113,12 +117,19 @@ export async function refreshStreams(videos: HolodexVideo[]) {
                     .where(eq(channelsTable.youtube_id, video.channel.id));
                 let channelId = channelFetch.length > 0 ? channelFetch[0].id : null;
                 if (channelId === null) {
+                    const channelData = await onChannelNotFound(video.channel.id);
+                    if (!channelData) {
+                        continue;       // TODO: Check if we can fallback to a sane backend
+                    }
                     const channelAddResp = await db.insert(channelsTable).values({
                         youtube_id: video.channel.id,
-                        name: video.channel.name,
-                        profile_picture: video.channel.photo,
-                        group_name: video.channel.suborg.slice(2).replace("EN ", ""),
-                        inactive: 0
+                        name: channelData.name,
+                        romaji: channelData.romaji,
+                        profile_picture: channelData.profile_picture,
+                        group_name: channelData.group,
+                        inactive: 0,
+                        is_group_channel: channelData.is_group_channel ? 1 : 0,
+                        organization: channelData.organization
                     }).returning({ insertedId: channelsTable.id });
                     channelId = channelAddResp[0].insertedId ?? 0;
                 }
@@ -144,22 +155,28 @@ export async function refreshStreams(videos: HolodexVideo[]) {
     }
 }
 
-export async function refreshChannels(channels: HolodexChannel[]) {
+export async function refreshChannels(channels: BackendChannel[]) {
     try {
         for (const channel of channels) {
             await db.insert(channelsTable).values({
                 youtube_id: channel.id,
                 name: channel.name,
-                profile_picture: channel.photo ?? "",
-                group_name: channel.group ? channel.group.replace("EN ", "") : "N/A",
-                inactive: channel.inactive ? 1 : 0,
+                romaji: channel.romaji,
+                profile_picture: channel.profile_picture,
+                group_name: channel.group,
+                inactive: channel.is_inactive ? 1 : 0,
+                is_group_channel: channel.is_group_channel ? 1 : 0,
+                organization: channel.organization
             }).onConflictDoUpdate({
                 target: channelsTable.youtube_id,
                 set: {
                     name: channel.name,
-                    profile_picture: channel.photo ?? "",
-                    group_name: channel.group ? channel.group.replace("EN ", "") : "N/A",
-                    inactive: channel.inactive ? 1 : 0,
+                    romaji: channel.romaji,
+                    profile_picture: channel.profile_picture,
+                    group_name: channel.group,
+                    inactive: channel.is_inactive ? 1 : 0,
+                    is_group_channel: channel.is_group_channel ? 1 : 0,
+                    organization: channel.organization
                 }
             });
         }

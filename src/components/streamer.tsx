@@ -11,14 +11,12 @@ interface StreamerSelectProps {
     onChange: (channelId: number, enabled: boolean) => void;
 }
 
-export const channelRegex: RegExp = /\s*[\[【].*[】\]]\s*/;
-
 export const StreamerSelect = memo(function StreamerSelect({ channel, enabled, onChange }: StreamerSelectProps) {
     const [imageError, setImageError] = useState(false);
 
     return (
         <View className="rounded-md flex-1 flex-row items-center bg-secondary-container p-2 gap-4">
-            <View className="w-16 aspect-square">
+            <View className="ml-1 w-16 aspect-square">
                 {
                     !imageError &&
                     <Image
@@ -38,8 +36,17 @@ export const StreamerSelect = memo(function StreamerSelect({ channel, enabled, o
                 }
             </View>
             <View className="flex-1 shrink">
-                <Text numberOfLines={2} className="text-on-secondary-container text-lg" weight="bold">{channel.name.replace(channelRegex, "")}</Text>
-                <Text numberOfLines={2} className="text-on-secondary-container" weight="medium">{channel.group_name}</Text>
+                <View>
+                    <Text numberOfLines={2} className="text-on-secondary-container text-lg" weight="bold">{channel.name}</Text>
+                    {
+                        channel.romaji &&
+                        <Text numberOfLines={2} className="text-on-secondary-container opacity-60 -my-1">{channel.romaji}</Text>
+                    }
+                </View>
+                {
+                    channel.group_name &&
+                    <Text numberOfLines={2} className="text-on-secondary-container" weight="medium">{channel.group_name}</Text>
+                }
             </View>
             <Host matchContents>
                 <Checkbox value={enabled} onValueChange={(value) => onChange(channel.id, value)} />
