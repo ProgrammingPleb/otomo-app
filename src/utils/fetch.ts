@@ -1,10 +1,11 @@
-import { BackendChannel } from "@/model/backend";
+import { AppChannel, AppVideo } from "@/model/app";
 import { HolodexGeneralQuery, HolodexLiveEndpointOptions, HolodexVideo } from "@/model/holodex";
-import { getSettings, isRefreshPossible, updateLastCheckedTime } from "./db";
+import { getChannelData, getSettings, isRefreshPossible, updateLastCheckedTime, updateOneChannel } from "./db";
 
 const STREAMS_BUFFER_NAME = "streams";
 const CHANNELS_BUFFER_NAME = "channels";
-const STREAMS_BUFFER_HOURS = 0.25;
+const STREAMS_HOLODEX_BUFFER_HOURS = 0.25;
+const STREAMS_BACKEND_BUFFER_HOURS = 0.08;
 const CHANNELS_BUFFER_HOURS = 4;
 
 /**
@@ -53,7 +54,7 @@ async function fetchHolodexData<T = unknown>(endpoint: string, options?: Holodex
  * @returns Returned data from the endpoint.
  */
 async function fetchBackendData<T = unknown>(endpoint: string) {
-    const resp = await fetch(`http://main-server:3000/api/v1${endpoint}`);
+    const resp = await fetch(`https://otomo.pleb.moe/api/v1${endpoint}`);
 
     if (resp.ok) {
         return await resp.json() as T;
@@ -66,7 +67,7 @@ async function fetchBackendData<T = unknown>(endpoint: string) {
  * Fetches all upcoming and current live streams. Does not contain streams that have already ended.
  * @returns All upcoming and current live streams. `undefined` if checked too recently (within 15 minutes).
  */
-export async function getLatestVideos() {
+export async function getLatestVideos(): Promise<AppVideo[] | undefined> {
     if (!await isRefreshPossible(STREAMS_BUFFER_NAME)) {
         return;
     }
@@ -76,8 +77,38 @@ export async function getLatestVideos() {
         status: ["live", "upcoming"]
     } as HolodexLiveEndpointOptions);
 
-    await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BUFFER_HOURS);
-    return data ?? [];
+    if (data) {
+        const streams = [];
+
+        for (const row of data) {
+            let channelData = await getChannelData(row.channel.id);
+            if (!channelData) {
+                channelData = await getOneChannel(row.channel.id);
+                if (!channelData) {
+                    continue;   // TODO: Implement better fallback methods
+                }
+                await updateOneChannel(channelData);
+            }
+
+            streams.push({
+                video_id: row.id,
+                title: row.title,
+                time: row.start_actual != null ?
+                    new Date(row.start_actual).getTime() :
+                    new Date(row.start_scheduled ?? 0).getTime(),
+                channel: channelData,
+                ended: false,
+            });
+        }
+
+        await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_HOLODEX_BUFFER_HOURS);
+        return streams;
+    }
+
+    const backendData = await fetchBackendData<AppVideo[]>("/streams");
+    await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BACKEND_BUFFER_HOURS);
+
+    return backendData ?? [];
 }
 
 /**
@@ -85,11 +116,11 @@ export async function getLatestVideos() {
  * @returns All channels. `undefined` if checked too recently (within 4 hours).
  */
 export async function getLatestChannels() {
-    /* if (!await isRefreshPossible(CHANNELS_BUFFER_NAME)) {
+    if (!await isRefreshPossible(CHANNELS_BUFFER_NAME)) {
         return;
-    } */
+    }
 
-    const channels = await fetchBackendData<BackendChannel[]>("/channels");
+    const channels = await fetchBackendData<AppChannel[]>("/channels");
 
     await updateLastCheckedTime(CHANNELS_BUFFER_NAME, CHANNELS_BUFFER_HOURS);
     return channels;
@@ -104,7 +135,7 @@ export async function getOneChannel(channelId: string) {
         return;
     }
 
-    const channels = await fetchBackendData<BackendChannel>(`/channels/${channelId}`);
+    const channels = await fetchBackendData<AppChannel>(`/channels/${channelId}`);
 
     return channels;
 }

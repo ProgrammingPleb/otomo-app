@@ -7,14 +7,14 @@ const FETCH_TASK_IDENTIFIER = "data-fetch";
 
 TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => {
     try {
-        const videos = await getLatestVideos();
-        if (videos) {
-            await refreshStreams(videos, async (channelId) => await getOneChannel(channelId));
-        }
-
         const channels = await getLatestChannels();
         if (channels) {
             await refreshChannels(channels);
+        }
+
+        const videos = await getLatestVideos();
+        if (videos) {
+            await refreshStreams(videos, async (channelId) => await getOneChannel(channelId));
         }
         return BackgroundTask.BackgroundTaskResult.Success;
     } catch (e) {

@@ -1,5 +1,4 @@
-import { BackendChannel } from "@/model/backend";
-import { HolodexVideo } from "@/model/holodex";
+import { AppChannel, AppVideo } from "@/model/app";
 import { SettingsData } from "@/model/settings";
 import { eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -87,8 +86,8 @@ export async function setSettings(settings: SettingsData) {
 }
 
 export async function refreshStreams(
-    videos: HolodexVideo[],
-    onChannelNotFound: (channelId: string) => Promise<BackendChannel | undefined>
+    videos: AppVideo[],
+    onChannelNotFound: (channelId: string) => Promise<AppChannel | undefined>
 ) {
     try {
         // Check for streams not in the current list and assume they have ended
@@ -98,7 +97,7 @@ export async function refreshStreams(
             video_id: streamsTable.video_id
         }).from(streamsTable).where(gte(streamsTable.time, checkDate.getTime()));
         const dayStreams = dayStreamsRaw.map((video) => video.video_id);
-        const currentLivestreams = videos.map((video) => video.id);
+        const currentLivestreams = videos.map((video) => video.video_id);
         for (const video of dayStreams) {
             if (!currentLivestreams.includes(video)) {
                 await db.update(streamsTable).set({
@@ -109,44 +108,21 @@ export async function refreshStreams(
 
         // Now check and update streams that are live or upcoming
         for (const video of videos) {
-            if (video.type == "stream") {
-                const channelFetch = await db.select({
-                    id: channelsTable.id
-                })
-                    .from(channelsTable)
-                    .where(eq(channelsTable.youtube_id, video.channel.id));
-                let channelId = channelFetch.length > 0 ? channelFetch[0].id : null;
-                if (channelId === null) {
-                    const channelData = await onChannelNotFound(video.channel.id);
-                    if (!channelData) {
-                        continue;       // TODO: Check if we can fallback to a sane backend
-                    }
-                    const channelAddResp = await db.insert(channelsTable).values({
-                        youtube_id: video.channel.id,
-                        name: channelData.name,
-                        romaji: channelData.romaji,
-                        profile_picture: channelData.profile_picture,
-                        group_name: channelData.group,
-                        inactive: 0,
-                        is_group_channel: channelData.is_group_channel ? 1 : 0,
-                        organization: channelData.organization
-                    }).returning({ insertedId: channelsTable.id });
-                    channelId = channelAddResp[0].insertedId ?? 0;
-                }
-                const epochTime = (video.start_actual != null ?
-                    new Date(video.start_actual).getTime() :
-                    new Date(video.start_scheduled ?? 0).getTime());
-                await db.insert(streamsTable).values({
-                    channel_id: channelId,
-                    title: video.title,
-                    video_id: video.id,
-                    time: epochTime,
-                    ended: 0
-                }).onConflictDoUpdate({
-                    target: streamsTable.video_id,
-                    set: { title: video.title, time: epochTime }
-                });
+            const channelDbId = await getChannelDbId(video.channel.id);
+            if (!channelDbId) {
+                continue;       // Drop if for some reason the channel is still not in the DB
             }
+
+            await db.insert(streamsTable).values({
+                channel_id: channelDbId,
+                title: video.title,
+                video_id: video.video_id,
+                time: video.time,
+                ended: video.ended ? 1: 0
+            }).onConflictDoUpdate({
+                target: streamsTable.video_id,
+                set: { title: video.title, time: video.time }
+            });
         }
     } catch (e) {
         console.error("DB: Unable to set streams!", e);
@@ -155,11 +131,67 @@ export async function refreshStreams(
     }
 }
 
-export async function refreshChannels(channels: BackendChannel[]) {
+export async function getChannelDbId(channelId: string) {
+    try {
+        const data = await db.select({ id: channelsTable.id }).from(channelsTable).where(eq(channelsTable.youtube_id, channelId));
+
+        if (data.length < 1) {
+            return;
+        }
+
+        return data[0].id;
+    } catch (e) {
+        console.error(`DB: Unable to get channel database ID! ${channelId}`, e);
+    }
+}
+
+export async function getChannelData(channelId: string): Promise<AppChannel | undefined> {
+    try {
+        const data = await db.select().from(channelsTable).where(eq(channelsTable.youtube_id, channelId));
+
+        if (data.length < 1) {
+            return;
+        }
+
+        const { id, group_name, inactive, is_group_channel, ...channel } = data[0];
+        return {
+            id: data[0].youtube_id,
+            group: group_name,
+            is_inactive: inactive == 1,
+            is_group_channel: is_group_channel == 1,
+            ...channel
+        };
+    } catch (e) {
+        console.error(`DB: Unable to get channel database data! ${channelId}`, e);
+    }
+}
+
+export async function refreshChannels(channels: AppChannel[]) {
     try {
         for (const channel of channels) {
-            await db.insert(channelsTable).values({
-                youtube_id: channel.id,
+            await updateOneChannel(channel);
+        }
+    } catch (e) {
+        console.error("DB: Unable to set channels!", e);
+    } finally {
+        console.log("Added all channels!");
+    }
+}
+
+export async function updateOneChannel(channel: AppChannel) {
+    try {
+        await db.insert(channelsTable).values({
+            youtube_id: channel.id,
+            name: channel.name,
+            romaji: channel.romaji,
+            profile_picture: channel.profile_picture,
+            group_name: channel.group,
+            inactive: channel.is_inactive ? 1 : 0,
+            is_group_channel: channel.is_group_channel ? 1 : 0,
+            organization: channel.organization
+        }).onConflictDoUpdate({
+            target: channelsTable.youtube_id,
+            set: {
                 name: channel.name,
                 romaji: channel.romaji,
                 profile_picture: channel.profile_picture,
@@ -167,23 +199,10 @@ export async function refreshChannels(channels: BackendChannel[]) {
                 inactive: channel.is_inactive ? 1 : 0,
                 is_group_channel: channel.is_group_channel ? 1 : 0,
                 organization: channel.organization
-            }).onConflictDoUpdate({
-                target: channelsTable.youtube_id,
-                set: {
-                    name: channel.name,
-                    romaji: channel.romaji,
-                    profile_picture: channel.profile_picture,
-                    group_name: channel.group,
-                    inactive: channel.is_inactive ? 1 : 0,
-                    is_group_channel: channel.is_group_channel ? 1 : 0,
-                    organization: channel.organization
-                }
-            });
-        }
+            }
+        });
     } catch (e) {
-        console.error("DB: Unable to set channels!", e);
-    } finally {
-        console.log("Added all channels!");
+        console.error("DB: Unable to set channel!", e);
     }
 }
 

@@ -1,4 +1,12 @@
-export interface BackendChannel {
+export interface AppVideo {
+    title: string;
+    video_id: string;
+    time: number;
+    ended: boolean;
+    channel: AppChannel;
+}
+
+export interface AppChannel {
     id: string,
     name: string,
     romaji: string | null,

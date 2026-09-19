@@ -1,8 +1,8 @@
 import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
-import { db, refreshStreams } from "@/utils/db";
-import { getLatestVideos, getOneChannel } from "@/utils/fetch";
+import { db, refreshChannels, refreshStreams } from "@/utils/db";
+import { getLatestChannels, getLatestVideos, getOneChannel } from "@/utils/fetch";
 import { format } from "date-fns";
 import { and, eq, gte, notLike } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
@@ -42,6 +42,10 @@ export default function HomeTab() {
   const refreshStreamsList = useCallback(async (showRefreshing: boolean) => {
     if (showRefreshing) {
       setRefreshing(true);
+    }
+    const channels = await getLatestChannels();
+    if (channels) {
+      await refreshChannels(channels);
     }
     const videos = await getLatestVideos();
     if (videos) {
