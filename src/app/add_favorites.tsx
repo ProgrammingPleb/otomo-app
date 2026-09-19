@@ -32,7 +32,7 @@ export default function AddFavoritesPage() {
         .filter((row) =>
             searchTerm != "" ?
                 row.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                row.romaji != null ? row.romaji!.toLowerCase().includes(searchTerm.toLowerCase()) : false || 
+                (row.romaji !== null ? row.romaji.toLowerCase().includes(searchTerm.toLowerCase()) : false) || 
                 row.group_name!.toLowerCase().includes(searchTerm.toLowerCase()) :
                 true
         )
