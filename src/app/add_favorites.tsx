@@ -27,16 +27,17 @@ export default function AddFavoritesPage() {
         .sort((a, b) =>
             (favoritedChannels.has(b.id) ? 1 : 0) - (favoritedChannels.has(a.id) ? 1 : 0) ||
             (a.group_name ?? "").localeCompare(b.group_name ?? "") ||
-        a.name.localeCompare(b.name)
+            a.name.localeCompare(b.name)
         )
         .filter((row) =>
             searchTerm != "" ?
-                row.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                (row.romaji !== null ? row.romaji.toLowerCase().includes(searchTerm.toLowerCase()) : false) || 
+                row.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (row.romaji !== null ? row.romaji.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
                 row.group_name!.toLowerCase().includes(searchTerm.toLowerCase()) :
                 true
         )
         , [favoritesData, searchTerm]);
+    const [threeLvlHeight, setThreeLvlHeight] = useState(0);
 
     const handleFavorite = useCallback((channelId: number, enabled: boolean) => {
         updateFavorites(channelId, enabled ? "add" : "remove");
@@ -94,8 +95,14 @@ export default function AddFavoritesPage() {
                 data={channelsSorted}
                 renderItem={({ item }) =>
                     <StreamerSelect
+                        height={threeLvlHeight}
                         channel={item}
                         enabled={favoritedChannels.has(item.id)}
+                        onLayout={(height) => {
+                            if (threeLvlHeight == 0) {
+                                setThreeLvlHeight(height);
+                            }
+                        }}
                         onChange={handleFavorite}
                     />
                 }

@@ -6,16 +6,28 @@ import { View } from "react-native";
 import { channelsTable } from "../../db/schema";
 
 interface StreamerSelectProps {
+    height: number;
     channel: typeof channelsTable.$inferSelect;
     enabled: boolean;
+    onLayout: (height: number) => void;
     onChange: (channelId: number, enabled: boolean) => void;
 }
 
-export const StreamerSelect = memo(function StreamerSelect({ channel, enabled, onChange }: StreamerSelectProps) {
+export const StreamerSelect = memo(function StreamerSelect(
+    { height, channel, enabled, onLayout, onChange }: StreamerSelectProps
+) {
     const [imageError, setImageError] = useState(false);
 
     return (
-        <View className="rounded-md flex-1 flex-row items-center bg-secondary-container p-2 gap-4">
+        <View
+            className="rounded-md flex-1 flex-row items-center bg-secondary-container p-2 gap-4"
+            style={{ height: height != 0 ? height : undefined }}
+            onLayout={(event) => {
+                if (channel.romaji && channel.group_name) {
+                    onLayout(event.nativeEvent.layout.height);
+                }
+            }}
+        >
             <View className="ml-1 w-16 aspect-square">
                 {
                     !imageError &&
@@ -45,7 +57,9 @@ export const StreamerSelect = memo(function StreamerSelect({ channel, enabled, o
                 </View>
                 {
                     channel.group_name &&
-                    <Text numberOfLines={2} className="text-on-secondary-container" weight="medium">{channel.group_name}</Text>
+                    <Text numberOfLines={2} className="text-on-secondary-container" weight="medium">
+                        {channel.is_group_channel ? "Group Channel" : channel.group_name}
+                    </Text>
                 }
             </View>
             <Host matchContents>
