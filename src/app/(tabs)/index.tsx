@@ -80,10 +80,8 @@ export default function HomeTab() {
                 }}
               >
                 <View className="aspect-video bg-primary">
-                  <Image
-                    className="flex-1"
-                    source={`https://img.youtube.com/vi/${video.streams.video_id}/maxresdefault.jpg`}
-                    contentFit="cover"
+                  <ThumbnailImage
+                    videoId={video.streams.video_id}
                   />
                 </View>
                 <View className="flex flex-row bg-secondary-container px-4 pt-3 pb-4 items-center gap-2">
