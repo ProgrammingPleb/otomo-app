@@ -1,8 +1,12 @@
+export type NotificationStatus = "soon" | "now" | "none";
+
 export interface AppVideo {
     title: string;
     video_id: string;
-    time: number;
+    start_scheduled: number | null;
+    start_actual: number | null;
     ended: boolean;
+    notification: NotificationStatus;
     channel: AppChannel;
 }
 

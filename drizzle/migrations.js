@@ -7,6 +7,7 @@ import m0002 from './0002_secret_franklin_storm.sql';
 import m0003 from './0003_red_the_hand.sql';
 import m0004 from './0004_amused_senator_kelly.sql';
 import m0005 from './0005_open_daimon_hellstrom.sql';
+import m0006 from './0006_secret_vengeance.sql';
 
   export default {
     journal,
@@ -16,7 +17,8 @@ m0001,
 m0002,
 m0003,
 m0004,
-m0005
+m0005,
+m0006
     }
   }
   

@@ -3,27 +3,29 @@ import { SettingsSwitch } from "@/components/settings";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { SettingsData } from "@/model/settings";
-import { getSettings, refreshChannels, setSettings } from "@/utils/db";
+import { DEFAULT_SETTINGS, getLatestDbStreams, getSettings, refreshChannels, setSettings } from "@/utils/db";
 import { getLatestChannels } from "@/utils/fetch";
+import { cancelUpcomingNotifications, getNotificationsPermissionsStatus, requestNotificationsPermissions, sendInstantNotification } from "@/utils/notifications";
 import { isBackgroundDataFetchActive, registerBackgroundDataFetch, unregisterBackgroundDataFetch } from "@/workers/fetch";
+import { useFocusEffect, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 
 export default function SettingsTab() {
+  const router = useRouter();
   const onPrimary = useCSSVariable("--color-on-primary") as string;
   const onPrimaryContainer = useCSSVariable("--color-on-primary-container") as string;
   const inversePrimary = useCSSVariable("--color-inverse-primary") as string;
-  const originalSettings = useRef<SettingsData>({ apiKey: "" });
+  const [originalSettings, setOriginalSettings] = useState<SettingsData>(DEFAULT_SETTINGS);
 
+  const manualSettingsSet = useRef(false);
   const [apiKey, setApiKey] = useState("");
   const [dataFetchActive, setDataFetchActive] = useState(false);
 
   function needsSave() {
-    const settings = originalSettings.current;
-
-    return apiKey != settings.apiKey;
+    return apiKey != originalSettings.apiKey;
   }
 
   const handleToggleBackgroundDataFetch = useCallback(async (enable: boolean) => {
@@ -31,13 +33,55 @@ export default function SettingsTab() {
       await registerBackgroundDataFetch();
     } else {
       await unregisterBackgroundDataFetch();
+      await cancelUpcomingNotifications();
+      const newSettings: SettingsData = { ...originalSettings, notificationsEnabled: false };
+      setOriginalSettings(newSettings);
+      await setSettings(newSettings);
     }
     setDataFetchActive(enable);
-  }, []);
+  }, [originalSettings]);
+  const handleNotificationsToggle = useCallback(async (enable: boolean) => {
+    const newSettings: SettingsData = { ...originalSettings, notificationsEnabled: enable };
+    let updateNeeded = !enable;
+    if (enable) {
+      const status = await getNotificationsPermissionsStatus();
+      switch (status) {
+        case "granted":
+          updateNeeded = true;
+          break;
+        case "prompt":
+          updateNeeded = await requestNotificationsPermissions();
+          break;
+        case "settings":
+          router.push("/notifications/settings_prompt");
+          manualSettingsSet.current = true;
+          break;
+      }
+    } else {
+      await cancelUpcomingNotifications();
+    }
+    if (updateNeeded) {
+      setOriginalSettings(newSettings);
+      await setSettings(newSettings);
+    }
+  }, [originalSettings]);
+
+  useFocusEffect(() => {
+    if (manualSettingsSet.current) {
+      getNotificationsPermissionsStatus().then(async (status) => {
+        if (status == "granted") {
+          const newSettings: SettingsData = { ...originalSettings, notificationsEnabled: true };
+          setOriginalSettings(newSettings);
+          await setSettings(newSettings);
+        }
+      });
+      manualSettingsSet.current = false;
+    }
+  });
 
   useEffect(() => {
     getSettings().then((settings) => {
-      originalSettings.current = settings;
+      setOriginalSettings(settings);
       setApiKey(settings.apiKey);
     });
     isBackgroundDataFetchActive().then((active) => {
@@ -67,8 +111,8 @@ export default function SettingsTab() {
             android_ripple={needsSave() ? { color: `${inversePrimary}55` } : undefined}
             onPress={() => {
               if (needsSave()) {
-                setSettings({ apiKey: apiKey }).then(() => {
-                  originalSettings.current = { apiKey: apiKey };
+                setSettings({ ...originalSettings, apiKey: apiKey }).then(() => {
+                  setOriginalSettings({ ...originalSettings, apiKey: apiKey });
                 });
               }
             }}
@@ -99,11 +143,34 @@ export default function SettingsTab() {
             />
             <Text weight="semibold" className="text-on-primary">Refresh Current Channels</Text>
           </Pressable>
+          <Pressable
+            className={`flex flex-row gap-1 bg-primary self-start px-4 py-2.5 rounded-md`}
+            android_ripple={{ color: `${inversePrimary}55` }}
+            onPress={async () => {
+              const streams = await getLatestDbStreams();
+              await sendInstantNotification(streams[0], false);
+            }}
+          >
+            <SymbolView
+              tintColor={onPrimary}
+              name={{
+                android: "lab_research"
+              }}
+            />
+            <Text weight="semibold" className="text-on-primary">Send Test Notification</Text>
+          </Pressable>
           <SettingsSwitch
-          title="Background Refresh"
-          description="Refresh streams even when the app is closed."
-          value={dataFetchActive}
-          onValueChange={handleToggleBackgroundDataFetch}
+            title="Background Refresh"
+            description="Refresh streams even when the app is closed."
+            value={dataFetchActive}
+            onValueChange={handleToggleBackgroundDataFetch}
+          />
+          <SettingsSwitch
+            title="Stream Notifications"
+            description="Receive notifications when streams are starting."
+            value={originalSettings.notificationsEnabled}
+            onValueChange={handleNotificationsToggle}
+            enabled={dataFetchActive}
           />
         </View>
       </ScrollView>

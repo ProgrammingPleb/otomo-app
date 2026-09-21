@@ -1,10 +1,10 @@
-import { AppChannel, AppVideo } from "@/model/app";
+import { AppChannel, AppVideo, NotificationStatus } from "@/model/app";
 import { HolodexGeneralQuery, HolodexLiveEndpointOptions, HolodexVideo } from "@/model/holodex";
 import { getChannelData, getSettings, isRefreshPossible, updateLastCheckedTime, updateOneChannel } from "./db";
 
 const STREAMS_BUFFER_NAME = "streams";
 const CHANNELS_BUFFER_NAME = "channels";
-const STREAMS_HOLODEX_BUFFER_HOURS = 0.25;
+const STREAMS_HOLODEX_BUFFER_HOURS = 0.16;
 const STREAMS_BACKEND_BUFFER_HOURS = 0.08;
 const CHANNELS_BUFFER_HOURS = 4;
 
@@ -93,11 +93,11 @@ export async function getLatestVideos(): Promise<AppVideo[] | undefined> {
             streams.push({
                 video_id: row.id,
                 title: row.title,
-                time: row.start_actual != null ?
-                    new Date(row.start_actual).getTime() :
-                    new Date(row.start_scheduled ?? 0).getTime(),
+                start_scheduled: row.start_scheduled != null ? new Date(row.start_scheduled).getTime() : null,
+                start_actual: row.start_actual != null ? new Date(row.start_actual).getTime() : null,
                 channel: channelData,
                 ended: false,
+                notification: "none" as NotificationStatus
             });
         }
 
@@ -108,7 +108,7 @@ export async function getLatestVideos(): Promise<AppVideo[] | undefined> {
     const backendData = await fetchBackendData<AppVideo[]>("/streams");
     await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BACKEND_BUFFER_HOURS);
 
-    return backendData ?? [];
+    return backendData;
 }
 
 /**

@@ -23,8 +23,10 @@ export const streamsTable = sqliteTable("streams", {
     channel_id: int().notNull().references(() => channelsTable.id, { onDelete: "cascade" }),
     title: text().notNull(),
     video_id: text().notNull().unique(),
-    time: int().notNull(),
-    ended: int().notNull()
+    start_scheduled: int(),
+    start_actual: int(),
+    ended: int().notNull(),
+    notification: text({ enum: ["soon", "now", "none"] }).notNull().default("none")
 });
 
 export const favoritesTable = sqliteTable("favorites", {

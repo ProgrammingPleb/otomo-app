@@ -49,6 +49,20 @@
           ]
         }
       ],
+      [
+        "react-native-notify-kit",
+        {
+          "android": {
+            "icons": [
+              {
+                "name": "logo",
+                "path": "./assets/images/notification.png",
+                "type": "small"
+              }
+            ]
+          }
+        }
+      ],
       "expo-sqlite",
       "expo-background-task",
       "expo-image"

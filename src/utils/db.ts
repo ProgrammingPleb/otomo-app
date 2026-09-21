@@ -1,6 +1,6 @@
-import { AppChannel, AppVideo } from "@/model/app";
+import { AppChannel, AppVideo, NotificationStatus } from "@/model/app";
 import { SettingsData } from "@/model/settings";
-import { eq, gte } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, notLike, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as SQLite from "expo-sqlite";
 import { channelsTable, favoritesTable, lastCheckedTable, settingsTable, streamsTable } from "../../db/schema";
@@ -8,6 +8,60 @@ import { channelsTable, favoritesTable, lastCheckedTable, settingsTable, streams
 export const DB_NAME = "otomo";
 export const expo = SQLite.openDatabaseSync(DB_NAME, { enableChangeListener: true });
 export const db = drizzle(expo);
+
+export const DEFAULT_SETTINGS: SettingsData = {
+    apiKey: "",
+    notificationsEnabled: false,
+    notificationsPrompted: false,
+};
+interface StreamDbJoin {
+    streams: typeof streamsTable.$inferSelect,
+    channels: typeof channelsTable.$inferSelect | null
+}
+
+export function activeStreamsFilter() {
+    return db.select().from(streamsTable)
+        .leftJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id))
+        .where(
+            and(
+                eq(streamsTable.ended, 0),  // Filter the streams that have ended
+                and(
+                    notLike(streamsTable.title, "%Station"),  // Filter streams that are stations
+                    or(
+                        gte(streamsTable.start_scheduled, new Date().getTime() - (3 * 24 * 60 * 60 * 1000)),        // but make sure only ones that are confirmed to be stations (stream longer than 3 days)
+                        isNull(streamsTable.start_scheduled)
+                    )
+                )
+            )
+        );
+}
+
+export function streamDbToAppVideo(row: StreamDbJoin): AppVideo {
+    const {
+        id: unusedId,
+        youtube_id: channel_id,
+        inactive,
+        is_group_channel,
+        group_name,
+        ...channel
+    } = row.channels!;
+
+    return {
+        title: row.streams.title,
+        video_id: row.streams.video_id,
+        start_scheduled: row.streams.start_scheduled,
+        start_actual: row.streams.start_actual,
+        ended: row.streams.ended == 1,
+        notification: row.streams.notification,
+        channel: {
+            id: channel_id,
+            ...channel,
+            group: group_name,
+            is_inactive: inactive == 1,
+            is_group_channel: is_group_channel == 1
+        }
+    }
+}
 
 export async function isRefreshPossible(name: string) {
     const currentTimeMillis = new Date().getTime();
@@ -41,14 +95,12 @@ export async function updateLastCheckedTime(name: string, timeoutHours: number) 
             set: { time: currentTimeMillis + timeoutMillis }
         });
     } catch (e) {
-        console.error("DB: Unable to get settings!", e);
+        console.error(`DB: Unable to update last checked time for ${name}!`, e);
     }
 }
 
 export async function getSettings() {
-    const settings: SettingsData = {
-        apiKey: ""
-    };
+    const settings: SettingsData = { ...DEFAULT_SETTINGS };
 
     try {
         const data = await db.select({
@@ -60,6 +112,12 @@ export async function getSettings() {
             switch (row.key) {
                 case "apiKey":
                     settings.apiKey = row.value;
+                    break;
+                case "notificationsEnabled":
+                    settings.notificationsEnabled = row.value == "1";
+                    break;
+                case "notificationsPrompted":
+                    settings.notificationsPrompted = row.value == "1";
                     break;
             }
         }
@@ -74,20 +132,23 @@ export async function getSettings() {
 
 export async function setSettings(settings: SettingsData) {
     try {
-        await db.insert(settingsTable).values(
-            { key: "apiKey", value: settings.apiKey }
-        ).onConflictDoUpdate({
-            target: settingsTable.key,
-            set: { value: settings.apiKey }
-        });
+        const settingsObject = Object.entries(settings);
+
+        for (const option of settingsObject) {
+            await db.insert(settingsTable).values(
+                { key: option[0], value: typeof option[1] == "boolean" ? option[1] ? "1" : "0" : option[1] }
+            ).onConflictDoUpdate({
+                target: settingsTable.key,
+                set: { value: typeof option[1] == "boolean" ? option[1] ? "1" : "0" : option[1] }
+            });
+        }
     } catch (e) {
-        console.error("DB: Unable to get settings!", e);
+        console.error("DB: Unable to set settings!", e);
     }
 }
 
 export async function refreshStreams(
-    videos: AppVideo[],
-    onChannelNotFound: (channelId: string) => Promise<AppChannel | undefined>
+    videos: AppVideo[]
 ) {
     try {
         // Check for streams not in the current list and assume they have ended
@@ -95,7 +156,15 @@ export async function refreshStreams(
         checkDate.setDate(checkDate.getDate() - 1);
         const dayStreamsRaw = await db.select({
             video_id: streamsTable.video_id
-        }).from(streamsTable).where(gte(streamsTable.time, checkDate.getTime()));
+        }).from(streamsTable).where(
+            and(
+                eq(streamsTable.ended, 0),
+                or(
+                    gte(streamsTable.start_scheduled, checkDate.getTime()),
+                    isNull(streamsTable.start_scheduled)
+                )
+            )
+        );
         const dayStreams = dayStreamsRaw.map((video) => video.video_id);
         const currentLivestreams = videos.map((video) => video.video_id);
         for (const video of dayStreams) {
@@ -117,11 +186,18 @@ export async function refreshStreams(
                 channel_id: channelDbId,
                 title: video.title,
                 video_id: video.video_id,
-                time: video.time,
-                ended: video.ended ? 1: 0
+                start_scheduled: video.start_scheduled != null ? video.start_scheduled : null,
+                start_actual: video.start_actual != null ? video.start_actual : null,
+                ended: video.ended ? 1 : 0,
+                notification: "none"
             }).onConflictDoUpdate({
                 target: streamsTable.video_id,
-                set: { title: video.title, time: video.time }
+                set: {
+                    title: video.title,
+                    start_scheduled: video.start_scheduled != null ? video.start_scheduled : null,
+                    start_actual: video.start_actual != null ? video.start_actual : null,
+                    ended: video.ended ? 1 : 0
+                }
             });
         }
     } catch (e) {
@@ -129,6 +205,12 @@ export async function refreshStreams(
     } finally {
         console.log("Added all streams!");
     }
+}
+
+export async function getLatestDbStreams() {
+    const data = await activeStreamsFilter();
+
+    return data.map((row) => streamDbToAppVideo(row));
 }
 
 export async function getChannelDbId(channelId: string) {
@@ -163,6 +245,31 @@ export async function getChannelData(channelId: string): Promise<AppChannel | un
         };
     } catch (e) {
         console.error(`DB: Unable to get channel database data! ${channelId}`, e);
+    }
+}
+
+export async function getFavoritedChannels(): Promise<AppChannel[] | undefined> {
+    try {
+        const data = await db.select().from(favoritesTable)
+            .leftJoin(channelsTable, eq(favoritesTable.channel_id, channelsTable.id));
+
+        if (data.length < 1) {
+            return;
+        }
+
+        return data.map((row) => {
+            const { id, youtube_id, group_name, inactive, is_group_channel, ...channel } = row.channels!;
+
+            return {
+                id: youtube_id,
+                group: group_name,
+                is_inactive: inactive == 1,
+                is_group_channel: is_group_channel == 1,
+                ...channel
+            };
+        });
+    } catch (e) {
+        console.error("DB: Unable to get favorited channels!", e);
     }
 }
 
@@ -217,5 +324,24 @@ export async function updateFavorites(channelId: number, action: "add" | "remove
         }
     } catch (e) {
         console.error("DB: Unable to set favorites!", e);
+    }
+}
+
+export async function updateStreamNotification(streamId: string, status: NotificationStatus) {
+    try {
+        await db.update(streamsTable).set({ notification: status })
+            .where(eq(streamsTable.video_id, streamId));
+    } catch (e) {
+        console.error(`DB: Unable to set notification status "${status}" on stream "${streamId}"!`, e);
+    }
+}
+
+export async function resetUpcomingNotifications(streamIds: string[]) {
+    try {
+        await db.update(streamsTable).set({
+            notification: "none"
+        }).where(inArray(streamsTable.video_id, streamIds));
+    } catch (e) {
+        console.error("DB: Unable to set notification status \"none\" on resetting streams!", e);
     }
 }
