@@ -32,7 +32,10 @@ export default function FavoritesTab() {
     let data: { [key: string]: typeof favoritesData } = {};
 
     for (const row of favoritesData) {
-      const groupName = row.channels!.group_name!;
+      let groupName = row.channels!.group_name!;
+      if (groupName == "") {
+        groupName = row.channels!.organization;
+      }
 
       if (Object.keys(data).includes(groupName)) {
         data[groupName].push(row);
