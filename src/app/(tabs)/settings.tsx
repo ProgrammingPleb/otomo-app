@@ -3,9 +3,8 @@ import { SettingsSwitch } from "@/components/settings";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { SettingsData } from "@/model/settings";
-import { DEFAULT_SETTINGS, getLatestDbStreams, getSettings, refreshChannels, setSettings } from "@/utils/db";
-import { getLatestChannels } from "@/utils/fetch";
-import { cancelUpcomingNotifications, getNotificationsPermissionsStatus, requestNotificationsPermissions, sendInstantNotification } from "@/utils/notifications";
+import { DEFAULT_SETTINGS, getLatestDbStreams, getSettings, setSettings } from "@/utils/db";
+import { cancelUpcomingNotifications, getNotificationsPermissionsStatus, requestExcludeBatteryOptimization, requestNotificationsPermissions, sendInstantNotification } from "@/utils/notifications";
 import { isBackgroundDataFetchActive, registerBackgroundDataFetch, unregisterBackgroundDataFetch } from "@/workers/fetch";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
@@ -47,6 +46,7 @@ export default function SettingsTab() {
       const status = await getNotificationsPermissionsStatus();
       switch (status) {
         case "granted":
+          await requestExcludeBatteryOptimization();
           updateNeeded = true;
           break;
         case "prompt":
@@ -73,6 +73,7 @@ export default function SettingsTab() {
           const newSettings: SettingsData = { ...originalSettings, notificationsEnabled: true };
           setOriginalSettings(newSettings);
           await setSettings(newSettings);
+          await requestExcludeBatteryOptimization();
         }
       });
       manualSettingsSet.current = false;
@@ -129,19 +130,16 @@ export default function SettingsTab() {
             className={`flex flex-row gap-1 bg-primary self-start px-4 py-2.5 rounded-md`}
             android_ripple={{ color: `${inversePrimary}55` }}
             onPress={async () => {
-              const channels = await getLatestChannels();
-              if (channels) {
-                await refreshChannels(channels);
-              }
+              await requestExcludeBatteryOptimization();
             }}
           >
             <SymbolView
               tintColor={onPrimary}
               name={{
-                android: "refresh"
+                android: "battery_60"
               }}
             />
-            <Text weight="semibold" className="text-on-primary">Refresh Current Channels</Text>
+            <Text weight="semibold" className="text-on-primary">Check Battery Optimization</Text>
           </Pressable>
           <Pressable
             className={`flex flex-row gap-1 bg-primary self-start px-4 py-2.5 rounded-md`}

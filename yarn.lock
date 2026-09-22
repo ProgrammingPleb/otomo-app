@@ -2742,6 +2742,11 @@ expo-background-task@~57.0.19:
   dependencies:
     expo-task-manager "~57.0.19"
 
+expo-battery@~57.0.3:
+  version "57.0.3"
+  resolved "https://registry.yarnpkg.com/expo-battery/-/expo-battery-57.0.3.tgz#0f3575468fe88319090faf9dd57a7912d4d4c644"
+  integrity sha512-FZcwhvLC+LXjDwrPapRQ+71ULyGM2AMIGmmZzZScGYuaMrfTH3oX6otxbkCbePj66nUGHNExLkIzKNGVhLSO7g==
+
 expo-constants@~57.0.18, expo-constants@~57.0.19:
   version "57.0.19"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.19.tgz#9df45e23672342f44f12f290399d95097af738c6"
@@ -2816,6 +2821,11 @@ expo-image@~57.0.5:
   integrity sha512-jOm5lofaIKXhQ7i0Hz3I5JuNULw/aghmpIPZXddwQcEtw8+wUhlozq3M7LbsOrcsBEapcG4jFs85DsfuFoz1tQ==
   dependencies:
     sf-symbols-typescript "^2.2.0"
+
+expo-intent-launcher@~57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-intent-launcher/-/expo-intent-launcher-57.0.1.tgz#8da5f5f1f9517e56333206d306e63e7ee070ccec"
+  integrity sha512-BYiPEOUeW3AkW/uxEESbS2UBw9LasJ8Heb6A8kF9Ueh6pqrXQHMNJFHzfrOP8qZfv9G2e8CTzrtzpN5p0vH5fA==
 
 expo-json-utils@~57.0.2:
   version "57.0.2"

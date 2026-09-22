@@ -1,4 +1,7 @@
 import { AppVideo } from "@/model/app";
+import { isBatteryOptimizationEnabledAsync } from "expo-battery";
+import Constants from "expo-constants";
+import { ActivityAction, startActivityAsync } from "expo-intent-launcher";
 import { Linking } from "react-native";
 import Notifee, { AndroidStyle, AndroidVisibility, AuthorizationStatus, Notification, TimestampTrigger, TriggerType } from "react-native-notify-kit";
 import { getFavoritedChannels, getSettings, resetUpcomingNotifications, setSettings, updateStreamNotification } from "./db";
@@ -48,6 +51,7 @@ export async function requestNotificationsPermissions() {
         await setSettings({ ...settings, notificationsPrompted: true });
     }
     const resp = await Notifee.requestPermission();
+    await requestExcludeBatteryOptimization();
 
     return resp.authorizationStatus == AuthorizationStatus.AUTHORIZED;
 }
@@ -203,4 +207,20 @@ export async function processStreamNotifications(streams: AppVideo[]) {
             console.error(`Unable to process notifications for "${stream.video_id}"!`, e);
         }
     }
+}
+
+export async function requestExcludeBatteryOptimization() {
+    const batteryOptimizationEnabled = await isBatteryOptimizationEnabledAsync();
+    const appId = Constants.expoConfig?.android?.package;
+    console.log(batteryOptimizationEnabled);
+    console.log(appId)
+    if (batteryOptimizationEnabled && appId) {
+        await startActivityAsync(ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, {
+            data: `package:${appId}`
+        });
+
+        return await isBatteryOptimizationEnabledAsync();
+    }
+
+    return batteryOptimizationEnabled;
 }
