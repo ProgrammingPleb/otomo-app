@@ -6,7 +6,8 @@ import { Linking } from "react-native";
 import Notifee, { AndroidStyle, AndroidVisibility, AuthorizationStatus, Notification, TimestampTrigger, TriggerType } from "react-native-notify-kit";
 import { getFavoritedChannels, getSettings, resetUpcomingNotifications, setSettings, updateStreamNotification } from "./db";
 
-const SCHEDULE_BUFFER_MINUTES = 30;
+const SCHEDULE_BUFFER_MINUTES = 240;
+const LIVE_BUFFER_MINUTES = 30;
 const UPCOMING_SEND_BEFORE_MINUTES = 10;
 
 const UPCOMING_CHANNEL_ID = "upcoming";
@@ -178,7 +179,7 @@ export async function processStreamNotifications(streams: AppVideo[]) {
                 stream.notification == "none" &&
                 stream.start_actual &&
                 stream.start_actual < currentTime &&
-                stream.start_actual + (SCHEDULE_BUFFER_MINUTES * 60 * 1000) > currentTime
+                stream.start_actual + (LIVE_BUFFER_MINUTES * 60 * 1000) > currentTime
             ) {     // Only send "Live now" on streams that were not processed and first seen as live
                 await sendInstantNotification(stream, false);
                 await updateStreamNotification(stream.video_id, "now");
@@ -212,8 +213,6 @@ export async function processStreamNotifications(streams: AppVideo[]) {
 export async function requestExcludeBatteryOptimization() {
     const batteryOptimizationEnabled = await isBatteryOptimizationEnabledAsync();
     const appId = Constants.expoConfig?.android?.package;
-    console.log(batteryOptimizationEnabled);
-    console.log(appId)
     if (batteryOptimizationEnabled && appId) {
         await startActivityAsync(ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, {
             data: `package:${appId}`
