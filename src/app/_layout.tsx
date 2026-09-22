@@ -1,9 +1,7 @@
-import { db, DB_NAME, expo, getLatestDbStreams, refreshChannels, refreshStreams } from "@/utils/db";
-import { getLatestChannels, getLatestVideos } from "@/utils/fetch";
-import { getOpenReason, openStream, processStreamNotifications, registerNotificationChannels } from "@/utils/notifications";
-import { FETCH_TASK_IDENTIFIER } from "@/workers/fetch";
+import { db, DB_NAME, expo } from "@/utils/db";
+import { getOpenReason, openStream, registerNotificationChannels } from "@/utils/notifications";
+import { dataFetchBackgroundJob, FETCH_TASK_IDENTIFIER } from "@/workers/fetch";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
-import * as BackgroundTask from "expo-background-task";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
@@ -14,26 +12,7 @@ import { SafeAreaListener } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import migrations from "../../drizzle/migrations";
 
-TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => {
-    try {
-        const channels = await getLatestChannels();
-        if (channels) {
-            await refreshChannels(channels);
-        }
-
-        const videos = await getLatestVideos();
-        if (videos) {
-            await refreshStreams(videos);
-        }
-
-        const streams = await getLatestDbStreams();
-        await processStreamNotifications(streams);
-        return BackgroundTask.BackgroundTaskResult.Success;
-    } catch (e) {
-        console.error("Data Fetch (BG): Unable to fetch the latest data!", e);
-        return BackgroundTask.BackgroundTaskResult.Failed;
-    }
-});
+TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => await dataFetchBackgroundJob());
 
 export default function RootLayout() {
   useDrizzleStudio(expo);
