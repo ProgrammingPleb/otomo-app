@@ -21,7 +21,7 @@ export default function FavoritesTab() {
   const onTertiary = useCSSVariable("--color-on-tertiary") as string;
   const { data: favoritesData } = useLiveQuery(
     db.select().from(favoritesTable)
-      .leftJoin(channelsTable, eq(channelsTable.id, favoritesTable.channel_id))
+      .innerJoin(channelsTable, eq(channelsTable.id, favoritesTable.channel_id))
   );
   const [fabVisible, setFabVisible] = useState(true);
   const fabOpacity = useSharedValue(100);
@@ -32,10 +32,7 @@ export default function FavoritesTab() {
     let data: { [key: string]: typeof favoritesData } = {};
 
     for (const row of favoritesData) {
-      let groupName = row.channels!.group_name!;
-      if (groupName == "") {
-        groupName = row.channels!.organization;
-      }
+      let groupName = row.channels.group_name ?? row.channels.organization;
 
       if (Object.keys(data).includes(groupName)) {
         data[groupName].push(row);
@@ -97,23 +94,23 @@ export default function FavoritesTab() {
                 >
                   {
                     group[1].map((row) =>
-                      <Pressable key={`${group[0]} Favorite: ${row.channels!.name}`}
+                      <Pressable key={`${group[0]} Favorite: ${row.channels.name}`}
                         className="flex-1 flex-row items-center gap-4 bg-secondary-container px-4 py-3 rounded-md"
                         android_ripple={{ color: `${secondary}55` }}
-                        onPress={async () => await Linking.openURL(`https://www.youtube.com/channel/${row.channels!.youtube_id}`)}
+                        onPress={async () => await Linking.openURL(`https://www.youtube.com/channel/${row.channels.youtube_id}`)}
                       >
                         <View className="w-12 aspect-square">
                           <Image
                             className="flex-1 rounded-full"
-                            source={row.channels!.profile_picture}
+                            source={row.channels.profile_picture}
                             contentFit="cover"
                           />
                         </View>
                         <View>
-                          <Text className="text-on-secondary-container text-lg" weight="semibold">{row.channels!.name}</Text>
+                          <Text className="text-on-secondary-container text-lg" weight="semibold">{row.channels.name}</Text>
                           {
-                            row.channels!.romaji &&
-                            <Text className="-mt-1 opacity-60 text-on-secondary-container">{row.channels!.romaji}</Text>
+                            row.channels.romaji &&
+                            <Text className="-mt-1 opacity-60 text-on-secondary-container">{row.channels.romaji}</Text>
                           }
                         </View>
                       </Pressable>

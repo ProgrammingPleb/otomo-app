@@ -16,12 +16,12 @@ export const DEFAULT_SETTINGS: SettingsData = {
 };
 interface StreamDbJoin {
     streams: typeof streamsTable.$inferSelect,
-    channels: typeof channelsTable.$inferSelect | null
+    channels: typeof channelsTable.$inferSelect
 }
 
 export function activeStreamsFilter() {
     return db.select().from(streamsTable)
-        .leftJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id))
+        .innerJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id))
         .where(
             and(
                 eq(streamsTable.ended, 0),  // Filter the streams that have ended
@@ -44,7 +44,7 @@ export function streamDbToAppVideo(row: StreamDbJoin): AppVideo {
         is_group_channel,
         group_name,
         ...channel
-    } = row.channels!;
+    } = row.channels;
 
     return {
         title: row.streams.title,
@@ -251,14 +251,14 @@ export async function getChannelData(channelId: string): Promise<AppChannel | un
 export async function getFavoritedChannels(): Promise<AppChannel[] | undefined> {
     try {
         const data = await db.select().from(favoritesTable)
-            .leftJoin(channelsTable, eq(favoritesTable.channel_id, channelsTable.id));
+            .innerJoin(channelsTable, eq(favoritesTable.channel_id, channelsTable.id));
 
         if (data.length < 1) {
             return;
         }
 
         return data.map((row) => {
-            const { id, youtube_id, group_name, inactive, is_group_channel, ...channel } = row.channels!;
+            const { id, youtube_id, group_name, inactive, is_group_channel, ...channel } = row.channels;
 
             return {
                 id: youtube_id,

@@ -79,15 +79,15 @@ export default function HomeTab() {
                       <View className="flex flex-row rounded-full overflow-hidden w-8 aspect-square">
                         <Image
                           className="flex-1"
-                          source={video.channels!.profile_picture}
+                          source={video.channels.profile_picture}
                           contentFit="cover"
                         />
                       </View>
                       <View className="flex-row gap-1">
-                        <Text className="text-on-secondary-container" weight="medium">{video.channels!.name}</Text>
+                        <Text className="text-on-secondary-container" weight="medium">{video.channels.name}</Text>
                         {
-                          video.channels!.romaji &&
-                          <Text className="text-on-secondary-container opacity-60" weight="medium">({video.channels!.romaji})</Text>
+                          video.channels.romaji &&
+                          <Text className="text-on-secondary-container opacity-60" weight="medium">({video.channels.romaji})</Text>
                         }
                       </View>
                     </View>
