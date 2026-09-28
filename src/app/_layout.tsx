@@ -43,6 +43,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add_favorites" />
           <Stack.Screen name="notifications/settings_prompt" />
+          <Stack.Screen name="debug" />
         </Stack>
       </SafeAreaListener>
     </SQLiteProvider>
