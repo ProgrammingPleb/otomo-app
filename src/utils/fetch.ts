@@ -3,7 +3,7 @@ import { isRefreshPossible, updateLastCheckedTime } from "./db";
 
 const STREAMS_BUFFER_NAME = "streams";
 const CHANNELS_BUFFER_NAME = "channels";
-const STREAMS_BACKEND_BUFFER_HOURS = 0.08;
+const STREAMS_BACKEND_BUFFER_MINUTES = 5;
 const CHANNELS_BUFFER_HOURS = 4;
 
 /**
@@ -32,7 +32,7 @@ export async function getLatestVideos(): Promise<AppVideo[] | undefined> {
     }
 
     const backendData = await fetchBackendData<AppVideo[]>("/streams");
-    await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BACKEND_BUFFER_HOURS);
+    await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BACKEND_BUFFER_MINUTES / 60);
 
     return backendData;
 }
