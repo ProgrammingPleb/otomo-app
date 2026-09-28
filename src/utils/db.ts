@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     apiKey: "",
     notificationsEnabled: false,
     notificationsPrompted: false,
+    onboardingDone: false,
 };
 interface StreamDbJoin {
     streams: typeof streamsTable.$inferSelect,
@@ -118,6 +119,9 @@ export async function getSettings() {
                     break;
                 case "notificationsPrompted":
                     settings.notificationsPrompted = row.value == "1";
+                    break;
+                case "onboardingDone":
+                    settings.onboardingDone = row.value == "1";
                     break;
             }
         }
