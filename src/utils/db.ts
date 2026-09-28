@@ -1,6 +1,6 @@
 import { AppChannel, AppVideo, NotificationStatus } from "@/model/app";
 import { SettingsData } from "@/model/settings";
-import { and, eq, gte, inArray, isNull, notLike, or } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, notLike, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as SQLite from "expo-sqlite";
 import { channelsTable, favoritesTable, lastCheckedTable, settingsTable, streamsTable } from "../../db/schema";
@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     apiKey: "",
     notificationsEnabled: false,
     notificationsPrompted: false,
+    onboardingDone: false,
 };
 interface StreamDbJoin {
     streams: typeof streamsTable.$inferSelect,
@@ -20,6 +21,8 @@ interface StreamDbJoin {
 }
 
 export function activeStreamsFilter() {
+    const currentTime = new Date().getTime();
+
     return db.select().from(streamsTable)
         .innerJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id))
         .where(
@@ -28,9 +31,10 @@ export function activeStreamsFilter() {
                 and(
                     notLike(streamsTable.title, "%Station"),  // Filter streams that are stations
                     or(
-                        gte(streamsTable.start_scheduled, new Date().getTime() - (3 * 24 * 60 * 60 * 1000)),        // but make sure only ones that are confirmed to be stations (stream longer than 3 days)
+                        gte(streamsTable.start_scheduled, currentTime - (3 * 24 * 60 * 60 * 1000)),        // but make sure only ones that are confirmed to be stations (stream longer than 3 days)
                         isNull(streamsTable.start_scheduled)
-                    )
+                    ),
+                    lt(streamsTable.start_scheduled, currentTime + 7 * 24 * 60 * 60 * 1000)           // and also filter out waiting rooms
                 )
             )
         );
@@ -118,6 +122,9 @@ export async function getSettings() {
                     break;
                 case "notificationsPrompted":
                     settings.notificationsPrompted = row.value == "1";
+                    break;
+                case "onboardingDone":
+                    settings.onboardingDone = row.value == "1";
                     break;
             }
         }

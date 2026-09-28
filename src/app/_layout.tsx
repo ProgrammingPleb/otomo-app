@@ -1,15 +1,17 @@
 import { db, DB_NAME, expo } from "@/utils/db";
 import { getOpenReason, openStream, registerNotificationChannels } from "@/utils/notifications";
 import { dataFetchBackgroundJob, FETCH_TASK_IDENTIFIER } from "@/workers/fetch";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import * as TaskManager from "expo-task-manager";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Notifee, { EventType } from "react-native-notify-kit";
 import { SafeAreaListener } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import { settingsTable } from "../../db/schema";
 import migrations from "../../drizzle/migrations";
 
 TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => await dataFetchBackgroundJob());
@@ -39,13 +41,42 @@ export default function RootLayout() {
       <SafeAreaListener onChange={({ insets }) => {
         Uniwind.updateInsets(insets);
       }}>
-        <Stack screenOptions={{ headerShown: false }}>
+        <AppNavStack />
+      </SafeAreaListener>
+    </SQLiteProvider>
+  );
+}
+
+function AppNavStack() {
+  const data = useLiveQuery(db.select().from(settingsTable));
+
+  const isOnboardingDone = useMemo(() => {
+    let completed = false;
+    if (data.updatedAt) {
+      for (const row of data.data) {
+        if (row.key == "onboardingDone") {
+          completed = row.value == "1";
+        }
+      }
+      return completed;
+    }
+  }, [data]);
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={isOnboardingDone !== undefined}>
+        <Stack.Protected guard={!isOnboardingDone}>
+          <Stack.Screen name="onboarding/welcome" />
+          <Stack.Screen name="onboarding/favorites" />
+          <Stack.Screen name="onboarding/streams" />
+        </Stack.Protected>
+        <Stack.Protected guard={isOnboardingDone!}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add_favorites" />
           <Stack.Screen name="notifications/settings_prompt" />
           <Stack.Screen name="debug" />
-        </Stack>
-      </SafeAreaListener>
-    </SQLiteProvider>
+        </Stack.Protected>
+      </Stack.Protected>
+    </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import SettingsScreenshot from "@/assets/images/otomo-notification-settings.png";
+import SettingsScreenshot from "@/assets/images/screenshots/otomo-notification-settings.png";
 import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import { getNotificationsPermissionsStatus } from "@/utils/notifications";
