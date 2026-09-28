@@ -13,6 +13,7 @@
     },
     "android": {
       "permissions": [
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
         "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
       ],
       "adaptiveIcon": {
@@ -79,6 +80,12 @@
       "eas": {
         "projectId": "4ebef65a-96f4-433d-97a6-b03f310f47b9"
       }
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4ebef65a-96f4-433d-97a6-b03f310f47b9"
     }
   }
 }
