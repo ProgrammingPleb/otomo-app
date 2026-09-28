@@ -23,8 +23,8 @@ export default function TabLayout() {
                 <NativeTabs.Trigger.Label>Favorites</NativeTabs.Trigger.Label>
             </NativeTabs.Trigger>
             <NativeTabs.Trigger name="settings">
-                <NativeTabs.Trigger.Icon md="settings" />
-                <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon md="more_horiz" />
+                <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>
             </NativeTabs.Trigger>
         </NativeTabs>
     )
