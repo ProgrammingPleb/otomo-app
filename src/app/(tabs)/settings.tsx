@@ -1,4 +1,3 @@
-import { AppTextInput as TextInput } from "@/components/input";
 import { SettingsSwitch } from "@/components/settings";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
@@ -15,7 +14,6 @@ import { useCSSVariable } from "uniwind";
 export default function SettingsTab() {
   const router = useRouter();
   const onPrimary = useCSSVariable("--color-on-primary") as string;
-  const onPrimaryContainer = useCSSVariable("--color-on-primary-container") as string;
   const inversePrimary = useCSSVariable("--color-inverse-primary") as string;
   const [originalSettings, setOriginalSettings] = useState<SettingsData>(DEFAULT_SETTINGS);
 
@@ -98,34 +96,6 @@ export default function SettingsTab() {
           <Text className="text-primary">Set your preferences of the app here.</Text>
         </View>
         <View className="flex gap-2">
-          <TextInput
-            title="Holodex API Key"
-            titleClassName="text-on-surface"
-            className="text-on-surface"
-            placeholder="Input Holodex API key here."
-            hint="Use this to avoid rate limits."
-            value={apiKey}
-            onChangeText={(input) => setApiKey(input)}
-          />
-          <Pressable
-            className={`flex flex-row gap-1 ${needsSave() ? "bg-primary" : "bg-primary-container opacity-60"} self-start px-4 py-2.5 rounded-md`}
-            android_ripple={needsSave() ? { color: `${inversePrimary}55` } : undefined}
-            onPress={() => {
-              if (needsSave()) {
-                setSettings({ ...originalSettings, apiKey: apiKey }).then(() => {
-                  setOriginalSettings({ ...originalSettings, apiKey: apiKey });
-                });
-              }
-            }}
-          >
-            <SymbolView
-              tintColor={needsSave() ? onPrimary : onPrimaryContainer}
-              name={{
-                android: "save"
-              }}
-            />
-            <Text weight="semibold" className={needsSave() ? "text-on-primary" : "text-on-primary-container"}>Save</Text>
-          </Pressable>
           <Pressable
             className={`flex flex-row gap-1 bg-primary self-start px-4 py-2.5 rounded-md`}
             android_ripple={{ color: `${inversePrimary}55` }}

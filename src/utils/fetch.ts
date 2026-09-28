@@ -1,51 +1,10 @@
-import { AppChannel, AppVideo, NotificationStatus } from "@/model/app";
-import { HolodexGeneralQuery, HolodexLiveEndpointOptions, HolodexVideo } from "@/model/holodex";
-import { getChannelData, getSettings, isRefreshPossible, updateLastCheckedTime, updateOneChannel } from "./db";
+import { AppChannel, AppVideo } from "@/model/app";
+import { isRefreshPossible, updateLastCheckedTime } from "./db";
 
 const STREAMS_BUFFER_NAME = "streams";
 const CHANNELS_BUFFER_NAME = "channels";
-const STREAMS_HOLODEX_BUFFER_HOURS = 0.16;
 const STREAMS_BACKEND_BUFFER_HOURS = 0.08;
 const CHANNELS_BUFFER_HOURS = 4;
-
-/**
- * Fetches data from the Holodex endpoint.  
- * Returns `T` if data is received, `undefined` if it has errored out or no data was received.
- * @param endpoint The V2 API endpoint, starting with `/`.
- * @returns Returned data from the endpoint.
- */
-async function fetchHolodexData<T = unknown>(endpoint: string, options?: HolodexGeneralQuery) {
-    const apiKey = (await getSettings()).apiKey;
-    if (apiKey == "") {
-        return;
-    }
-
-    const fetchOptions = Object.entries(options ?? {
-        org: "Nijisanji"
-    } as HolodexGeneralQuery);
-    const urlOptions = [];
-    for (const option of fetchOptions) {
-        if (Array.isArray(option[1])) {
-            urlOptions.push(`${option[0]}=${option[1].join(",")}`);
-        } else if (option[0] === "limit") {
-            urlOptions.push(`${option[0]}=${option[1] as number > 50 ? 50 : option[1]}`);
-        } else {
-            urlOptions.push(`${option[0]}=${option[1]}`);
-        }
-    }
-
-    const resp = await fetch(`https://holodex.net/api/v2${endpoint}${urlOptions.length > 0 ? `?${urlOptions.join("&")}` : ""}`, {
-        headers: {
-            "X-APIKEY": apiKey
-        }
-    });
-
-    if (resp.ok) {
-        return await resp.json() as T;
-    } else {
-        return;
-    }
-}
 
 /**
  * Fetches data from the backend endpoint.  
@@ -70,39 +29,6 @@ async function fetchBackendData<T = unknown>(endpoint: string) {
 export async function getLatestVideos(): Promise<AppVideo[] | undefined> {
     if (!await isRefreshPossible(STREAMS_BUFFER_NAME)) {
         return;
-    }
-
-    const data = await fetchHolodexData<HolodexVideo[]>("/live", {
-        org: "Nijisanji",
-        status: ["live", "upcoming"]
-    } as HolodexLiveEndpointOptions);
-
-    if (data) {
-        const streams = [];
-
-        for (const row of data) {
-            let channelData = await getChannelData(row.channel.id);
-            if (!channelData) {
-                channelData = await getOneChannel(row.channel.id);
-                if (!channelData) {
-                    continue;   // TODO: Implement better fallback methods
-                }
-                await updateOneChannel(channelData);
-            }
-
-            streams.push({
-                video_id: row.id,
-                title: row.title,
-                start_scheduled: row.start_scheduled != null ? new Date(row.start_scheduled).getTime() : null,
-                start_actual: row.start_actual != null ? new Date(row.start_actual).getTime() : null,
-                channel: channelData,
-                ended: false,
-                notification: "none" as NotificationStatus
-            });
-        }
-
-        await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_HOLODEX_BUFFER_HOURS);
-        return streams;
     }
 
     const backendData = await fetchBackendData<AppVideo[]>("/streams");

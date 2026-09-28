@@ -11,7 +11,6 @@ As for now, the application is focused on members from NIJISANJI Project, with o
 
 ## Getting Started
 ### Prerequisites
-- [Holodex API Key](https://docs.holodex.net/#section/Getting-Started/Obtaining-API-Key)
 - Android 12 (or higher)
 > iOS support is not possible due to a lack of a macOS machine + Apple Developer account.
 
