@@ -5,8 +5,8 @@ import { requestExcludeBatteryOptimization, sendInstantNotification } from "@/ut
 import { setStringAsync } from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { updateId, useUpdates } from "expo-updates";
-import { ReactNode, useState } from "react";
+import { channel, runtimeVersion, updateId, useUpdates } from "expo-updates";
+import { ReactNode, useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 
@@ -15,9 +15,28 @@ export default function DebugPage() {
     const easUpdateStatus = useUpdates();
     const onPrimary = useCSSVariable("--color-on-primary") as string;
 
+    const updateStatus = useMemo(() => {
+        if (easUpdateStatus.isChecking) {
+            return "Checking";
+        }
+        if (easUpdateStatus.isDownloading) {
+            return "Yes (Downloading)";
+        }
+        if (easUpdateStatus.isUpdatePending) {
+            return "Yes (Pending Restart)";
+        }
+        if (easUpdateStatus.isUpdateAvailable) {
+            return "Yes"
+        }
+        if (!updateId) {
+            return "N/A";
+        }
+        return "No";
+    }, [easUpdateStatus])
+
     return (
         <View className="flex-1 py-safe px-4 bg-surface">
-            <ScrollView contentContainerClassName="gap-3">
+            <ScrollView contentContainerClassName="gap-4">
                 <View className="flex-row gap-3">
                     <Pressable
                         className="self-center rounded-md p-2 bg-primary"
@@ -44,13 +63,21 @@ export default function DebugPage() {
                 </View>
                 <View className="gap-2">
                     <Text className="text-on-surface text-2xl" weight="bold">Details</Text>
+                    <Pressable onPress={async () => { if (runtimeVersion) await setStringAsync(runtimeVersion) }}>
+                        <Text className="text-on-surface text-lg" weight="bold">EAS Runtime Fingerprint</Text>
+                        <Text className="text-on-surface">{runtimeVersion ? runtimeVersion : "N/A"}</Text>
+                    </Pressable>
                     <Pressable onPress={async () => { if (updateId) await setStringAsync(updateId) }}>
                         <Text className="text-on-surface text-lg" weight="bold">EAS Update Build</Text>
                         <Text className="text-on-surface">{updateId ? updateId : "N/A"}</Text>
                     </Pressable>
+                    <Pressable onPress={async () => { if (channel) await setStringAsync(channel) }}>
+                        <Text className="text-on-surface text-lg" weight="bold">EAS Update Channel</Text>
+                        <Text className="text-on-surface">{channel ? channel : "N/A"}</Text>
+                    </Pressable>
                     <View>
                         <Text className="text-on-surface text-lg" weight="bold">EAS Update Available</Text>
-                        <Text className="text-on-surface">{easUpdateStatus.isUpdateAvailable ? "Yes" : "No"}</Text>
+                        <Text className="text-on-surface">{updateStatus}</Text>
                     </View>
                 </View>
             </ScrollView>
@@ -129,10 +156,11 @@ interface ActionSectionProps {
     title: string;
     description: ReactNode;
     action: string;
+    disabled?: boolean;
     onTap: () => void;
 }
 
-function ActionSection({ title, description, action, onTap }: ActionSectionProps) {
+function ActionSection({ title, description, action, disabled = false, onTap }: ActionSectionProps) {
     const inversePrimary = useCSSVariable("--color-inverse-primary") as string;
 
     return (
@@ -145,6 +173,8 @@ function ActionSection({ title, description, action, onTap }: ActionSectionProps
                 className={`flex flex-row gap-1 bg-primary px-4 py-2.5 rounded-md`}
                 android_ripple={{ color: `${inversePrimary}55` }}
                 onPress={onTap}
+                disabled={disabled}
+                style={{ opacity: disabled ? 0.6 : 1 }}
             >
                 <Text weight="semibold" className="text-on-primary">{action}</Text>
             </Pressable>
