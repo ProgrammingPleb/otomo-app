@@ -1,10 +1,11 @@
 import { AppChannel, AppVideo } from "@/model/app";
 import { isRefreshPossible, updateLastCheckedTime } from "./db";
 
-const STREAMS_BUFFER_NAME = "streams";
-const CHANNELS_BUFFER_NAME = "channels";
+export const STREAMS_BUFFER_NAME = "streams";
+export const CHANNELS_BUFFER_NAME = "channels";
 const STREAMS_BACKEND_BUFFER_MINUTES = 5;
 const CHANNELS_BUFFER_HOURS = 4;
+const FETCH_TIMEOUT_BUFFER_SECONDS = 30;
 
 /**
  * Fetches data from the backend endpoint.  
@@ -13,12 +14,21 @@ const CHANNELS_BUFFER_HOURS = 4;
  * @returns Returned data from the endpoint.
  */
 async function fetchBackendData<T = unknown>(endpoint: string) {
-    const resp = await fetch(`https://otomo.pleb.moe/api/v1${endpoint}`);
+    const abortController = new AbortController();
+    const timer = setTimeout(() => abortController.abort(), FETCH_TIMEOUT_BUFFER_SECONDS * 1000);
 
-    if (resp.ok) {
-        return await resp.json() as T;
-    } else {
-        return;
+    try {
+        const resp = await fetch(`https://otomo.pleb.moe/api/v1${endpoint}`);
+
+        if (resp.ok) {
+            return await resp.json() as T;
+        } else {
+            return;
+        }
+    } catch (e) {
+        console.error(`Fetch: Unable to fetch data for "${endpoint}"!`, e);
+    } finally {
+        clearTimeout(timer);
     }
 }
 
@@ -32,7 +42,9 @@ export async function getLatestVideos(): Promise<AppVideo[] | undefined> {
     }
 
     const backendData = await fetchBackendData<AppVideo[]>("/streams");
-    await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BACKEND_BUFFER_MINUTES / 60);
+    if (backendData) {
+        await updateLastCheckedTime(STREAMS_BUFFER_NAME, STREAMS_BACKEND_BUFFER_MINUTES / 60);
+    }
 
     return backendData;
 }
@@ -47,8 +59,10 @@ export async function getLatestChannels() {
     }
 
     const channels = await fetchBackendData<AppChannel[]>("/channels");
-
-    await updateLastCheckedTime(CHANNELS_BUFFER_NAME, CHANNELS_BUFFER_HOURS);
+    if (channels) {
+        await updateLastCheckedTime(CHANNELS_BUFFER_NAME, CHANNELS_BUFFER_HOURS);
+    }
+    
     return channels;
 }
 
