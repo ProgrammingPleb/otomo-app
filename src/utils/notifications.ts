@@ -2,8 +2,8 @@ import { AppVideo } from "@/model/app";
 import { isBatteryOptimizationEnabledAsync } from "expo-battery";
 import Constants from "expo-constants";
 import { ActivityAction, startActivityAsync } from "expo-intent-launcher";
-import { Linking } from "react-native";
-import Notifee, { AndroidStyle, AndroidVisibility, AuthorizationStatus, Notification, TimestampTrigger, TriggerType } from "react-native-notify-kit";
+import { AppState, Linking } from "react-native";
+import Notifee, { AndroidStyle, AndroidVisibility, AuthorizationStatus, Event, EventType, Notification, TimestampTrigger, TriggerType } from "react-native-notify-kit";
 import { getFavoritedChannels, getSettings, resetUpcomingNotifications, setSettings, updateStreamNotification } from "./db";
 
 const SCHEDULE_BUFFER_MINUTES = 240;
@@ -15,18 +15,48 @@ const LIVE_CHANNEL_ID = "live";
 
 type NotificationsPermissionsStatus = "granted" | "prompt" | "settings";
 
-export async function getOpenReason() {
-    const initNotification = await Notifee.getInitialNotification();
+let pendingVideoId: string | undefined;
 
-    if (initNotification) {
-        openStream(initNotification.notification.data?.videoId as string | undefined);
+export async function handleNotificationTap({ type, detail }: Event) {
+    try {
+        if (type == EventType.PRESS) {
+            pendingVideoId = detail.notification?.data?.videoId as string | undefined;
+            await Notifee.getInitialNotification();
+
+            if (AppState.currentState == "active") {
+                await openPendingStream();
+            }
+        }
+    } catch (e) {
+        console.error("Notification: Unable to handle notification tap!", e);
     }
 }
 
-export function openStream(videoId: string | undefined) {
+export async function getOpenReason() {
+    const videoId = (await Notifee.getInitialNotification())?.notification.data?.videoId as string | undefined;
+
     if (videoId) {
-        Linking.openURL(`https://www.youtube.com/watch?v=${videoId}`);
+        const settings = await getSettings();
+        if (settings.lastOpenedNotification != videoId) {
+            await openStream(videoId);
+            await setSettings({ ...settings, lastOpenedNotification: videoId });
+        }
     }
+}
+
+export async function openPendingStream() {
+    const videoId = pendingVideoId;
+    pendingVideoId = undefined;
+
+    if (videoId) {
+        await openStream(videoId);
+        const settings = await getSettings();
+        await setSettings({ ...settings, lastOpenedNotification: videoId });
+    }
+}
+
+export async function openStream(videoId: string) {
+    await Linking.openURL(`https://www.youtube.com/watch?v=${videoId}`);
 }
 
 export async function registerNotificationChannels() {

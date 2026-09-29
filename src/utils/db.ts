@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     notificationsEnabled: false,
     notificationsPrompted: false,
     onboardingDone: false,
+    lastOpenedNotification: "",
 };
 interface StreamDbJoin {
     streams: typeof streamsTable.$inferSelect,
@@ -113,9 +114,13 @@ export async function getSettings() {
         }).from(settingsTable);
 
         for (const row of data) {
-            switch (row.key) {
+            const keyName = row.key as keyof SettingsData;
+            switch (keyName) {
                 case "apiKey":
                     settings.apiKey = row.value;
+                    break;
+                case "lastOpenedNotification":
+                    settings.lastOpenedNotification = row.value;
                     break;
                 case "notificationsEnabled":
                     settings.notificationsEnabled = row.value == "1";

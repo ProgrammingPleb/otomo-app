@@ -1,6 +1,6 @@
 import '@/global.css';
 import { db, DB_NAME, expo } from "@/utils/db";
-import { getOpenReason, openStream, registerNotificationChannels } from "@/utils/notifications";
+import { getOpenReason, handleNotificationTap, openPendingStream, registerNotificationChannels } from "@/utils/notifications";
 import { dataFetchBackgroundJob, FETCH_TASK_IDENTIFIER } from "@/workers/fetch";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
@@ -9,13 +9,15 @@ import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import * as TaskManager from "expo-task-manager";
 import { useEffect, useMemo } from "react";
-import Notifee, { EventType } from "react-native-notify-kit";
+import { AppState } from 'react-native';
+import Notifee from "react-native-notify-kit";
 import { SafeAreaListener } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { settingsTable } from "../../db/schema";
 import migrations from "../../drizzle/migrations";
 
 TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => await dataFetchBackgroundJob());
+Notifee.onBackgroundEvent(handleNotificationTap);
 
 export default function RootLayout() {
   useDrizzleStudio(expo);
@@ -28,13 +30,21 @@ export default function RootLayout() {
   }, [success, error]);
   useEffect(() => {
     registerNotificationChannels();
-    getOpenReason();
+    getOpenReason().catch((e) => console.error(`Notification: Unable to get app open reason!`, e));
 
-    return Notifee.onForegroundEvent(({ type, detail }) => {
-      if (type == EventType.PRESS) {
-        openStream(detail.notification?.data?.videoId as string | undefined);
+    const appStateSub = AppState.addEventListener("change", (state) => {
+      if (state == "active") {
+        openPendingStream().catch((e) =>
+          console.error("Notification: Unable to open pending stream!", e)
+        )
       }
-    })
+    });
+    const unsubscribeNotifeeForeground = Notifee.onForegroundEvent(handleNotificationTap);
+
+    return () => {
+      appStateSub.remove();
+      unsubscribeNotifeeForeground();
+    };
   }, []);
 
   return (
