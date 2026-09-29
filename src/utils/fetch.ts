@@ -18,7 +18,7 @@ async function fetchBackendData<T = unknown>(endpoint: string) {
     const timer = setTimeout(() => abortController.abort(), FETCH_TIMEOUT_BUFFER_SECONDS * 1000);
 
     try {
-        const resp = await fetch(`https://otomo.pleb.moe/api/v1${endpoint}`);
+        const resp = await fetch(`https://otomo.pleb.moe/api/v1${endpoint}`, { signal: abortController.signal });
 
         if (resp.ok) {
             return await resp.json() as T;
