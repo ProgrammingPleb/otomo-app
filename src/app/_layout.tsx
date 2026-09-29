@@ -1,3 +1,4 @@
+import '@/global.css';
 import { db, DB_NAME, expo } from "@/utils/db";
 import { getOpenReason, openStream, registerNotificationChannels } from "@/utils/notifications";
 import { dataFetchBackgroundJob, FETCH_TASK_IDENTIFIER } from "@/workers/fetch";

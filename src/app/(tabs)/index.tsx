@@ -1,7 +1,6 @@
 import { Image } from "@/components/image";
 import { ThumbnailImage } from "@/components/streams";
 import { AppText as Text } from "@/components/text";
-import '@/global.css';
 import { activeStreamsFilter, db, refreshChannels, refreshStreams } from "@/utils/db";
 import { getLatestChannels, getLatestVideos } from "@/utils/fetch";
 import { format } from "date-fns";
