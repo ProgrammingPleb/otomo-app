@@ -2,7 +2,7 @@
   "expo": {
     "name": "Otomo",
     "slug": "otomo-app",
-    "version": "1.0.0-beta1",
+    "version": "1.0.0-beta2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "otomoapp",

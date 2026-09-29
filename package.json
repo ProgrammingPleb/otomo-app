@@ -55,7 +55,7 @@
     "android:dev": "APP_VARIANT=development expo run:android",
     "android:preview": "APP_VARIANT=preview expo run:android",
     "android:prod": "APP_VARIANT=release expo run:android --variant release",
-    "android:publish": "EAS_LOCAL_BUILD_WORKINGDIR='.cache' eas build --platform android --local",
+    "android:publish": "EAS_LOCAL_BUILD_WORKINGDIR=\"$PWD/.cache\" eas build --platform android --local",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
