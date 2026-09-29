@@ -1,8 +1,8 @@
 import { AppChannel, AppVideo } from "@/model/app";
 import { isRefreshPossible, updateLastCheckedTime } from "./db";
 
-const STREAMS_BUFFER_NAME = "streams";
-const CHANNELS_BUFFER_NAME = "channels";
+export const STREAMS_BUFFER_NAME = "streams";
+export const CHANNELS_BUFFER_NAME = "channels";
 const STREAMS_BACKEND_BUFFER_MINUTES = 5;
 const CHANNELS_BUFFER_HOURS = 4;
 

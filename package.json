@@ -12,6 +12,7 @@
     "expo-application": "~57.0.3",
     "expo-background-task": "~57.0.19",
     "expo-battery": "~57.0.3",
+    "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.19",
     "expo-dev-client": "~57.0.19",
     "expo-device": "~57.0.2",
