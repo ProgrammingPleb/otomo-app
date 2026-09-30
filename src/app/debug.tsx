@@ -19,8 +19,8 @@ export default function DebugPage() {
     const onPrimary = useCSSVariable("--color-on-primary") as string;
 
     return (
-        <View className="flex-1 py-safe px-4 bg-surface">
-            <ScrollView contentContainerClassName="gap-4">
+        <View className="flex-1 py-safe bg-surface">
+            <ScrollView contentContainerClassName="gap-4 px-4">
                 <View className="flex-row gap-3">
                     <Pressable
                         className="self-center rounded-md p-2 bg-primary"
