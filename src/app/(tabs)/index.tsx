@@ -20,7 +20,7 @@ export default function HomeTab() {
   const { data: favoritesData } = useLiveQuery(db.select().from(favoritesTable));
   const favoritedChannels = useMemo(() => new Set(favoritesData.map((row) => row.channel_id)), [favoritesData]);
   const sortedStreams = useMemo(() =>
-    streamsData.sort((a, b) =>
+    [...streamsData].sort((a, b) =>
       (favoritedChannels.has(b.streams.channel_id) ? 1 : 0) - (favoritedChannels.has(a.streams.channel_id) ? 1 : 0) ||
       (a.streams.start_scheduled ?? 0) - (b.streams.start_scheduled ?? 0)
     ), [streamsData, favoritedChannels]);
