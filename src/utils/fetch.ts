@@ -1,4 +1,5 @@
 import { AppChannel, AppVideo } from "@/model/app";
+import { BACKEND_URL } from "@/utils/env";
 import { isRefreshPossible, updateLastCheckedTime } from "./db";
 
 export const STREAMS_BUFFER_NAME = "streams";
@@ -18,7 +19,7 @@ async function fetchBackendData<T = unknown>(endpoint: string) {
     const timer = setTimeout(() => abortController.abort(), FETCH_TIMEOUT_BUFFER_SECONDS * 1000);
 
     try {
-        const resp = await fetch(`https://otomo.pleb.moe/api/v1${endpoint}`, { signal: abortController.signal });
+        const resp = await fetch(`${BACKEND_URL}/api/v1${endpoint}`, { signal: abortController.signal });
 
         if (resp.ok) {
             return await resp.json() as T;

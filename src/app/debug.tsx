@@ -1,5 +1,6 @@
 import { AppText as Text } from "@/components/text";
 import { getLatestDbStreams, updateLastCheckedTime } from "@/utils/db";
+import { BACKEND_URL } from "@/utils/env";
 import { CHANNELS_BUFFER_NAME, STREAMS_BUFFER_NAME } from "@/utils/fetch";
 import { requestExcludeBatteryOptimization, sendInstantNotification } from "@/utils/notifications";
 import { dataFetchBackgroundJob } from "@/workers/fetch";
@@ -45,6 +46,7 @@ export default function DebugPage() {
                     <ClearTimers />
                     <RunBackgroundTask onRefresh={setRefreshTime} />
                 </View>
+                <AppDetailsSection />
                 <EasDetailsSection />
                 <ScheduledNotificationsSection refreshTime={refreshTime} />
             </ScrollView>
@@ -135,6 +137,18 @@ function RunBackgroundTask({ onRefresh }: { onRefresh: (newTime: number) => void
             }}
         />
     )
+}
+
+function AppDetailsSection() {
+    return (
+        <View className="gap-2">
+            <Text className="text-on-surface text-2xl" weight="bold">App Details</Text>
+            <Pressable onPress={async () => { await setStringAsync(BACKEND_URL) }}>
+                <Text className="text-on-surface text-lg" weight="bold">Backend URL</Text>
+                <Text className="text-on-surface">{BACKEND_URL}</Text>
+            </Pressable>
+        </View>
+    );
 }
 
 function EasDetailsSection() {
