@@ -10,9 +10,10 @@ import { useCSSVariable } from "uniwind";
 import { favoritesTable } from "../../../db/schema";
 
 export default function HomeTab() {
+  const [now, setNow] = useState(Date.now());
   const primary = useCSSVariable("--color-primary") as string;
   const onPrimary = useCSSVariable("--color-on-primary") as string;
-  const { data: streamsData } = useLiveQuery(activeStreamsFilter());
+  const { data: streamsData } = useLiveQuery(activeStreamsFilter(now));
   const { data: favoritesData } = useLiveQuery(db.select().from(favoritesTable));
   const favoritedChannels = useMemo(() => new Set(favoritesData.map((row) => row.channel_id)), [favoritesData]);
   const sortedStreams = useMemo(() =>
@@ -20,7 +21,6 @@ export default function HomeTab() {
       (favoritedChannels.has(b.streams.channel_id) ? 1 : 0) - (favoritedChannels.has(a.streams.channel_id) ? 1 : 0) ||
       (a.streams.start_scheduled ?? 0) - (b.streams.start_scheduled ?? 0)
     ), [streamsData, favoritedChannels]);
-  const [now, setNow] = useState(Date.now());
   const [refreshing, setRefreshing] = useState(false);
 
   const refreshStreamsList = useCallback(async (showRefreshing: boolean) => {
@@ -66,8 +66,8 @@ export default function HomeTab() {
             <Text className="text-primary">
               {
                 "Live Streams: " +
-                `${streamsData.filter(({ streams }) => streams.start_actual ? streams.start_actual < new Date().getTime() : false).length.toString()} live, ` +
-                `${streamsData.filter(({ streams }) => streams.start_scheduled ? streams.start_scheduled > new Date().getTime() : false).length.toString()} upcoming`
+                `${streamsData.filter(({ streams }) => streams.start_actual ? streams.start_actual < now : false).length.toString()} live, ` +
+                `${streamsData.filter(({ streams }) => streams.start_scheduled ? streams.start_scheduled > now : false).length.toString()} upcoming`
               }
             </Text>
           </View>

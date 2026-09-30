@@ -21,9 +21,7 @@ interface StreamDbJoin {
     channels: typeof channelsTable.$inferSelect
 }
 
-export function activeStreamsFilter() {
-    const currentTime = new Date().getTime();
-
+export function activeStreamsFilter(currentTime: number) {
     return db.select().from(streamsTable)
         .innerJoin(channelsTable, eq(streamsTable.channel_id, channelsTable.id))
         .where(
@@ -220,7 +218,7 @@ export async function refreshStreams(
 }
 
 export async function getLatestDbStreams() {
-    const data = await activeStreamsFilter();
+    const data = await activeStreamsFilter(Date.now());
 
     return data.map((row) => streamDbToAppVideo(row));
 }
