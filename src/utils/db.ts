@@ -1,13 +1,24 @@
 import { AppChannel, AppVideo, NotificationStatus } from "@/model/app";
 import { SettingsData } from "@/model/settings";
-import { and, eq, gte, inArray, isNull, lt, notLike, or } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, notInArray, notLike, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
+import { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import * as SQLite from "expo-sqlite";
 import { channelsTable, favoritesTable, lastCheckedTable, settingsTable, streamsTable } from "../../db/schema";
 
 export const DB_NAME = "otomo";
 export const expo = SQLite.openDatabaseSync(DB_NAME, { enableChangeListener: true });
 export const db = drizzle(expo);
+
+/**
+ * A helper script that is used to inform conflict updates that the data that is incoming
+ * should be used instead.
+ * @param column The table's column that is being updated
+ * @returns The SQL statement used to inform the usage of the incoming data
+ */
+function excluded(column: SQLiteColumn) {
+    return sql`excluded.${sql.identifier(column.name)}`;
+}
 
 export const DEFAULT_SETTINGS: SettingsData = {
     apiKey: "",
@@ -161,59 +172,45 @@ export async function refreshStreams(
     videos: AppVideo[]
 ) {
     try {
-        // Check for streams not in the current list and assume they have ended
-        const checkDate = new Date();
-        checkDate.setDate(checkDate.getDate() - 1);
-        const dayStreamsRaw = await db.select({
-            video_id: streamsTable.video_id
-        }).from(streamsTable).where(
-            and(
-                eq(streamsTable.ended, 0),
-                or(
-                    gte(streamsTable.start_scheduled, checkDate.getTime()),
-                    isNull(streamsTable.start_scheduled)
-                )
-            )
-        );
-        const dayStreams = dayStreamsRaw.map((video) => video.video_id);
         const currentLivestreams = videos.map((video) => video.video_id);
-        for (const video of dayStreams) {
-            if (!currentLivestreams.includes(video)) {
-                await db.update(streamsTable).set({
-                    ended: 1
-                }).where(eq(streamsTable.video_id, video));
-            }
-        }
+        const channelIdMap = await getChannelDbYouTubeIds();
+        const filteredVideos = videos.filter((video) => channelIdMap.has(video.channel.id));
 
-        // Now check and update streams that are live or upcoming
-        for (const video of videos) {
-            const channelDbId = await getChannelDbId(video.channel.id);
-            if (!channelDbId) {
-                continue;       // Drop if for some reason the channel is still not in the DB
-            }
+        // An empty list will now make every stream ended
+        // TODO: Review back if needs review
+        db.transaction((tx) => {
+            tx.update(streamsTable).set({
+                ended: 1
+            }).where(
+                and(
+                    eq(streamsTable.ended, 0),
+                    notInArray(streamsTable.video_id, currentLivestreams)
+                )
+            ).run();
 
-            await db.insert(streamsTable).values({
-                channel_id: channelDbId,
-                title: video.title,
-                video_id: video.video_id,
-                start_scheduled: video.start_scheduled != null ? video.start_scheduled : null,
-                start_actual: video.start_actual != null ? video.start_actual : null,
-                ended: video.ended ? 1 : 0,
-                notification: "none"
-            }).onConflictDoUpdate({
-                target: streamsTable.video_id,
-                set: {
+            if (filteredVideos.length > 0) {
+                tx.insert(streamsTable).values(filteredVideos.map((video) => ({
+                    channel_id: channelIdMap.get(video.channel.id)!,
                     title: video.title,
-                    start_scheduled: video.start_scheduled != null ? video.start_scheduled : null,
-                    start_actual: video.start_actual != null ? video.start_actual : null,
+                    video_id: video.video_id,
+                    start_scheduled: video.start_scheduled ?? null,
+                    start_actual: video.start_actual ?? null,
                     ended: video.ended ? 1 : 0
-                }
-            });
-        }
+                }))).onConflictDoUpdate({
+                    target: streamsTable.video_id,
+                    set: {
+                        title: excluded(streamsTable.title),
+                        start_scheduled: excluded(streamsTable.start_scheduled),
+                        start_actual: excluded(streamsTable.start_actual),
+                        ended: excluded(streamsTable.ended)
+                    }
+                }).run();
+            }
+        });
+
+        console.log("Added all streams!");
     } catch (e) {
         console.error("DB: Unable to set streams!", e);
-    } finally {
-        console.log("Added all streams!");
     }
 }
 
@@ -223,18 +220,19 @@ export async function getLatestDbStreams() {
     return data.map((row) => streamDbToAppVideo(row));
 }
 
-export async function getChannelDbId(channelId: string) {
+export async function getChannelDbYouTubeIds() {
     try {
-        const data = await db.select({ id: channelsTable.id }).from(channelsTable).where(eq(channelsTable.youtube_id, channelId));
+        const data = await db.select({
+            id: channelsTable.id,
+            youtubeId: channelsTable.youtube_id
+        }).from(channelsTable);
 
-        if (data.length < 1) {
-            return;
-        }
-
-        return data[0].id;
+        return new Map<string, number>(data.map((item) => [item.youtubeId, item.id]));
     } catch (e) {
-        console.error(`DB: Unable to get channel database ID! ${channelId}`, e);
+        console.error(`DB: Unable to get channel database IDs!`, e);
     }
+
+    return new Map<string, number>();
 }
 
 export async function getChannelData(channelId: string): Promise<AppChannel | undefined> {
@@ -284,20 +282,12 @@ export async function getFavoritedChannels(): Promise<AppChannel[] | undefined> 
 }
 
 export async function refreshChannels(channels: AppChannel[]) {
-    try {
-        for (const channel of channels) {
-            await updateOneChannel(channel);
-        }
-    } catch (e) {
-        console.error("DB: Unable to set channels!", e);
-    } finally {
-        console.log("Added all channels!");
+    if (channels.length < 1) {
+        return;
     }
-}
 
-export async function updateOneChannel(channel: AppChannel) {
     try {
-        await db.insert(channelsTable).values({
+        await db.insert(channelsTable).values(channels.map((channel) => ({
             youtube_id: channel.id,
             name: channel.name,
             romaji: channel.romaji,
@@ -306,20 +296,22 @@ export async function updateOneChannel(channel: AppChannel) {
             inactive: channel.is_inactive ? 1 : 0,
             is_group_channel: channel.is_group_channel ? 1 : 0,
             organization: channel.organization
-        }).onConflictDoUpdate({
+        }))).onConflictDoUpdate({
             target: channelsTable.youtube_id,
             set: {
-                name: channel.name,
-                romaji: channel.romaji,
-                profile_picture: channel.profile_picture,
-                group_name: channel.group,
-                inactive: channel.is_inactive ? 1 : 0,
-                is_group_channel: channel.is_group_channel ? 1 : 0,
-                organization: channel.organization
+                name: excluded(channelsTable.name),
+                romaji: excluded(channelsTable.romaji),
+                profile_picture: excluded(channelsTable.profile_picture),
+                group_name: excluded(channelsTable.group_name),
+                inactive: excluded(channelsTable.inactive),
+                is_group_channel: excluded(channelsTable.is_group_channel),
+                organization: excluded(channelsTable.organization)
             }
         });
+
+        console.log("Added all channels!");
     } catch (e) {
-        console.error("DB: Unable to set channel!", e);
+        console.error("DB: Unable to set channels!", e);
     }
 }
 
