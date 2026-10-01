@@ -11,12 +11,13 @@ export interface AppVideo {
 }
 
 export interface AppChannel {
-    id: string,
-    name: string,
-    romaji: string | null,
-    profile_picture: string,
-    group: string | null,
-    is_inactive: boolean,
-    is_group_channel: boolean,
-    organization: string
+    id: string;
+    name: string;
+    romaji: string | null;
+    profile_picture: string;
+    group: string | null;
+    major_group: string | null;
+    is_inactive: boolean;
+    is_group_channel: boolean;
+    organization: string;
 }
