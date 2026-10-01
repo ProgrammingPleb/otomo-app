@@ -57,9 +57,17 @@ export const StreamerSelect = memo(function StreamerSelect(
                 </View>
                 {
                     channel.group_name &&
-                    <Text numberOfLines={2} className="text-on-secondary-container" weight="medium">
-                        {channel.is_group_channel ? "Group Channel" : channel.group_name}
-                    </Text>
+                    <View className="flex-row gap-1">
+                        <Text numberOfLines={2} className="text-on-secondary-container" weight="medium">
+                            {channel.is_group_channel ? "Group Channel" : channel.group_name}
+                        </Text>
+                        {
+                            channel.major_group &&
+                            <Text numberOfLines={2} className="text-on-secondary-container opacity-60">
+                                ({channel.major_group})
+                            </Text>
+                        }
+                    </View>
                 }
             </View>
             <Host matchContents>

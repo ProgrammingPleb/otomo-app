@@ -1,0 +1,1 @@
+ALTER TABLE `channels` ADD `major_group` text;

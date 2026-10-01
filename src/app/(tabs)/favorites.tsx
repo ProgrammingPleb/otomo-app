@@ -2,11 +2,11 @@ import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { db } from "@/utils/db";
-import { eq } from "drizzle-orm";
+import { count, eq, isNotNull } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useCallback, useState } from "react";
+import { useMemo, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import Animated, { useAnimatedScrollHandler, useSharedValue, withSpring } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
@@ -23,26 +23,42 @@ export default function FavoritesTab() {
     db.select().from(favoritesTable)
       .innerJoin(channelsTable, eq(channelsTable.id, favoritesTable.channel_id))
   );
+  const { data: majorGroupData } = useLiveQuery(
+    db.select({
+      majorGroup: channelsTable.major_group,
+      totalMembers: count()
+    }).from(channelsTable).where(isNotNull(channelsTable.major_group))
+      .groupBy(channelsTable.major_group)
+  );
   const [fabVisible, setFabVisible] = useState(true);
   const fabOpacity = useSharedValue(100);
   const lastScroll = useSharedValue(0);
   const [titleHeight, setTitleHeight] = useState(0);
 
-  const splitGroups = useCallback(() => {
-    let data: { [key: string]: typeof favoritesData } = {};
+  const groupedFavorites = useMemo(() => {
+    const validMajorGroups = getValidMajorGroups(favoritesData, majorGroupData);
+    const data: Map<string, typeof favoritesData> = new Map();
+    const sortedFavorites = [...favoritesData].sort((a, b) =>
+      (a.channels.group_name ?? "").localeCompare(b.channels.group_name ?? "") ||
+      a.channels.name.localeCompare(b.channels.name)
+    );
 
-    for (const row of favoritesData) {
+    for (const row of sortedFavorites) {
       let groupName = row.channels.group_name ?? row.channels.organization;
 
-      if (Object.keys(data).includes(groupName)) {
-        data[groupName].push(row);
+      if (row.channels.major_group && validMajorGroups.has(row.channels.major_group)) {
+        groupName = row.channels.major_group;
+      }
+
+      if (data.has(groupName)) {
+        data.get(groupName)!.push(row);
       } else {
-        data[groupName] = [row];
+        data.set(groupName, [row]);
       }
     }
 
-    return Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [favoritesData]);
+    return Array.from(data).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [favoritesData, majorGroupData]);
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -76,7 +92,7 @@ export default function FavoritesTab() {
 
         <View className="mt-4 flex-1 gap-6 pb-8">
           {
-            splitGroups().map((group) =>
+            groupedFavorites.map((group) =>
               <View className="relative" key={`Favorited Group - ${group[0]}`}>
                 <View className="left-1/2 -translate-x-1/2 absolute z-10">
                   <View className="px-4 bg-surface" onLayout={(event) => {
@@ -90,7 +106,7 @@ export default function FavoritesTab() {
                   </View>
                 </View>
                 <View className="flex-1 gap-4 px-4 pt-9 pb-6 outline outline-outline-variant rounded-md"
-                  style={{marginTop: titleHeight / 2}}
+                  style={{ marginTop: titleHeight / 2 }}
                 >
                   {
                     group[1].map((row) =>
@@ -142,4 +158,30 @@ export default function FavoritesTab() {
       </Animated.View>
     </View >
   );
+}
+
+function getValidMajorGroups(
+  favoritedChannels: { channels: { major_group: string | null } }[],
+  groupData: { majorGroup: string | null, totalMembers: number }[]
+) {
+  const validGroups: Set<string> = new Set();
+  const groupMap = new Map<string, number>();
+
+  for (const row of favoritedChannels) {
+    const majorGroup = row.channels.major_group;
+    if (!majorGroup) {
+      continue;
+    }
+
+    const count = groupMap.get(majorGroup);
+    groupMap.set(majorGroup, (count ?? 0) + 1);
+  }
+
+  for (const group of groupData) {
+    if (group.majorGroup && groupMap.get(group.majorGroup) === group.totalMembers) {
+      validGroups.add(group.majorGroup);
+    }
+  }
+
+  return validGroups;
 }

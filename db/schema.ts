@@ -13,6 +13,7 @@ export const channelsTable = sqliteTable("channels", {
     romaji: text(),
     profile_picture: text().notNull(),
     group_name: text(),
+    major_group: text(),
     inactive: int().notNull(),
     is_group_channel: int().notNull(),
     organization: text().notNull()
