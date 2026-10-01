@@ -3,4 +3,5 @@ export interface SettingsData {
     notificationsEnabled: boolean;
     notificationsPrompted: boolean;
     onboardingDone: boolean;
+    lastOpenedNotification: string;
 }

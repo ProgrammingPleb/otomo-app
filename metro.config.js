@@ -1,3 +1,7 @@
+if (!process.env.EXPO_PUBLIC_BACKEND_URL) {
+  throw new Error("EXPO_PUBLIC_BACKEND_URL is not set! Aborting.");
+}
+
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config');
 const { withUniwindConfig } = require('uniwind/metro'); 

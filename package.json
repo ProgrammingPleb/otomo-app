@@ -1,6 +1,6 @@
 {
   "name": "otomo-app",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.19",
@@ -51,11 +51,12 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
-    "android:dev": "APP_VARIANT=development expo run:android",
-    "android:preview": "APP_VARIANT=preview expo run:android",
-    "android:prod": "APP_VARIANT=release expo run:android --variant release",
+    "android:dev": "export APP_VARIANT=development && expo prebuild && expo run:android",
+    "android:preview": "export APP_VARIANT=preview && expo run:android --variant release",
+    "android:prod": "export APP_VARIANT=production && expo run:android --variant release",
     "android:publish": "EAS_LOCAL_BUILD_WORKINGDIR=\"$PWD/.cache\" eas build --platform android --local",
+    "android:fingerprint": "eas fingerprint:generate --platform android",
+    "update:prod": "eas update --platform android --channel production --environment production",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",

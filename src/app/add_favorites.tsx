@@ -24,19 +24,19 @@ export default function AddFavoritesPage() {
         favoritesData.map((channel) => channel.channel_id)
     ), [favoritesData]);
     const channelsSorted = useMemo(() => channelsData
+        .filter((row) =>
+            searchTerm != "" ?
+                row.name.toLowerCase().includes(searchTerm) ||
+                row.romaji?.toLowerCase().includes(searchTerm) ||
+                row.group_name?.toLowerCase().includes(searchTerm) :
+                true
+        )
         .sort((a, b) =>
             (favoritedChannels.has(b.id) ? 1 : 0) - (favoritedChannels.has(a.id) ? 1 : 0) ||
             (a.group_name ?? "").localeCompare(b.group_name ?? "") ||
             a.name.localeCompare(b.name)
         )
-        .filter((row) =>
-            searchTerm != "" ?
-                row.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (row.romaji !== null ? row.romaji.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-                row.group_name!.toLowerCase().includes(searchTerm.toLowerCase()) :
-                true
-        )
-        , [favoritesData, searchTerm]);
+        , [channelsData, favoritedChannels, searchTerm]);
     const [threeLvlHeight, setThreeLvlHeight] = useState(0);
 
     const handleFavorite = useCallback((channelId: number, enabled: boolean) => {
@@ -48,7 +48,7 @@ export default function AddFavoritesPage() {
             clearTimeout(searchTimeout.current);
         }
         searchTimeout.current = setTimeout(() => {
-            setSearchTerm(input);
+            setSearchTerm(input.toLowerCase());
             searchTimeout.current = null;
         }, 500);
     }, []);
