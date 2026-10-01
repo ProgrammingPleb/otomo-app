@@ -28,7 +28,8 @@ export default function AddFavoritesPage() {
             searchTerm != "" ?
                 row.name.toLowerCase().includes(searchTerm) ||
                 row.romaji?.toLowerCase().includes(searchTerm) ||
-                row.group_name?.toLowerCase().includes(searchTerm) :
+                row.group_name?.toLowerCase().includes(searchTerm) ||
+                row.major_group?.toLowerCase().includes(searchTerm) :
                 true
         )
         .sort((a, b) =>

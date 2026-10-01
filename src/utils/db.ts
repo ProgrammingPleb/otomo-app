@@ -293,6 +293,7 @@ export async function refreshChannels(channels: AppChannel[]) {
             romaji: channel.romaji,
             profile_picture: channel.profile_picture,
             group_name: channel.group,
+            major_group: channel.major_group,
             inactive: channel.is_inactive ? 1 : 0,
             is_group_channel: channel.is_group_channel ? 1 : 0,
             organization: channel.organization
@@ -303,6 +304,7 @@ export async function refreshChannels(channels: AppChannel[]) {
                 romaji: excluded(channelsTable.romaji),
                 profile_picture: excluded(channelsTable.profile_picture),
                 group_name: excluded(channelsTable.group_name),
+                major_group: excluded(channelsTable.major_group),
                 inactive: excluded(channelsTable.inactive),
                 is_group_channel: excluded(channelsTable.is_group_channel),
                 organization: excluded(channelsTable.organization)
