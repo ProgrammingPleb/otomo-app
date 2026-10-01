@@ -1,13 +1,11 @@
 import '@/global.css';
 import { db, DB_NAME, expo } from "@/utils/db";
 import { getOpenReason, handleNotificationTap, openPendingStream, registerNotificationChannels } from "@/utils/notifications";
-import { dataFetchBackgroundJob, FETCH_TASK_IDENTIFIER } from "@/workers/fetch";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
-import * as TaskManager from "expo-task-manager";
 import { useEffect, useMemo } from "react";
 import { AppState } from 'react-native';
 import Notifee from "react-native-notify-kit";
@@ -15,9 +13,6 @@ import { SafeAreaListener } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { settingsTable } from "../../db/schema";
 import migrations from "../../drizzle/migrations";
-
-TaskManager.defineTask(FETCH_TASK_IDENTIFIER, async () => await dataFetchBackgroundJob());
-Notifee.onBackgroundEvent(handleNotificationTap);
 
 export default function RootLayout() {
   useDrizzleStudio(expo);
