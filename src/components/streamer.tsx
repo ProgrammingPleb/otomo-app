@@ -2,6 +2,7 @@ import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import { Checkbox, Host } from "@expo/ui";
 import { useRecyclingState } from "@shopify/flash-list";
+import { ImageSource } from "expo-image";
 import { memo } from "react";
 import { View } from "react-native";
 import { channelsTable } from "../../db/schema";
@@ -35,6 +36,8 @@ export const StreamerSelect = memo(function StreamerSelect(
                     <Image
                         className="flex-1 rounded-full"
                         source={channel.profile_picture}
+                        placeholder={channel.profile_hash ? { thumbhash: channel.profile_hash } as ImageSource : null}
+                        placeholderContentFit="cover"
                         recyclingKey={channel.youtube_id}
                         contentFit="cover"
                         onError={(e) => {

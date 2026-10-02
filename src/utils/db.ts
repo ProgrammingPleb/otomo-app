@@ -65,6 +65,7 @@ export function streamDbToAppVideo(row: StreamDbJoin): AppVideo {
         video_id: row.streams.video_id,
         start_scheduled: row.streams.start_scheduled,
         start_actual: row.streams.start_actual,
+        thumbhash: row.streams.thumbhash,
         ended: row.streams.ended == 1,
         notification: row.streams.notification,
         channel: {
@@ -193,6 +194,7 @@ export async function refreshStreams(
                     channel_id: channelIdMap.get(video.channel.id)!,
                     title: video.title,
                     video_id: video.video_id,
+                    thumbhash: video.thumbhash,
                     start_scheduled: video.start_scheduled ?? null,
                     start_actual: video.start_actual ?? null,
                     ended: video.ended ? 1 : 0
@@ -200,6 +202,7 @@ export async function refreshStreams(
                     target: streamsTable.video_id,
                     set: {
                         title: excluded(streamsTable.title),
+                        thumbhash: excluded(streamsTable.thumbhash),
                         start_scheduled: excluded(streamsTable.start_scheduled),
                         start_actual: excluded(streamsTable.start_actual),
                         ended: excluded(streamsTable.ended)
@@ -292,22 +295,28 @@ export async function refreshChannels(channels: AppChannel[]) {
             name: channel.name,
             romaji: channel.romaji,
             profile_picture: channel.profile_picture,
+            profile_hash: channel.profile_hash,
             group_name: channel.group,
             major_group: channel.major_group,
             inactive: channel.is_inactive ? 1 : 0,
             is_group_channel: channel.is_group_channel ? 1 : 0,
-            organization: channel.organization
+            organization: channel.organization,
+            banner: channel.banner,
+            banner_hash: channel.banner_hash,
         }))).onConflictDoUpdate({
             target: channelsTable.youtube_id,
             set: {
                 name: excluded(channelsTable.name),
                 romaji: excluded(channelsTable.romaji),
                 profile_picture: excluded(channelsTable.profile_picture),
+                profile_hash: excluded(channelsTable.profile_hash),
                 group_name: excluded(channelsTable.group_name),
                 major_group: excluded(channelsTable.major_group),
                 inactive: excluded(channelsTable.inactive),
                 is_group_channel: excluded(channelsTable.is_group_channel),
-                organization: excluded(channelsTable.organization)
+                organization: excluded(channelsTable.organization),
+                banner: excluded(channelsTable.banner),
+                banner_hash: excluded(channelsTable.banner_hash),
             }
         });
 

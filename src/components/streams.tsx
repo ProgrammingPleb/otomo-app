@@ -2,6 +2,7 @@ import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import { useRecyclingState } from "@shopify/flash-list";
 import { format } from "date-fns";
+import { ImageSource } from "expo-image";
 import { SymbolView } from "expo-symbols";
 import { memo } from "react";
 import { Linking, Pressable, View } from "react-native";
@@ -10,6 +11,7 @@ import { channelsTable, streamsTable } from "../../db/schema";
 
 interface ThumbnailImageProps {
     videoId: string;
+    placeholder: string | null;
 }
 
 interface StreamsSelect {
@@ -17,13 +19,15 @@ interface StreamsSelect {
     channels: typeof channelsTable.$inferSelect;
 }
 
-export function ThumbnailImage({ videoId }: ThumbnailImageProps) {
+export function ThumbnailImage({ videoId, placeholder }: ThumbnailImageProps) {
     const [thumbnailType, setThumbnailType] = useRecyclingState("maxresdefault", [videoId]);
 
     return (
         <Image
             className="flex-1"
             recyclingKey={videoId}
+            placeholder={placeholder ? { thumbhash: placeholder } as ImageSource : null}
+            placeholderContentFit="cover"
             source={`https://img.youtube.com/vi/${videoId}/${thumbnailType}.jpg`}
             contentFit="cover"
             onError={() => setThumbnailType("hqdefault")}    // Fallback to hqdefault (since it's a confirmed quality) on failure
@@ -53,6 +57,7 @@ export const StreamCard = memo(
                     <View className="aspect-video bg-primary">
                         <ThumbnailImage
                             videoId={video.streams.video_id}
+                            placeholder={video.streams.thumbhash}
                         />
                     </View>
                     <View className="flex flex-row bg-secondary-container px-4 pt-3 pb-4 items-center gap-2">
