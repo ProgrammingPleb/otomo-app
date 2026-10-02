@@ -1,8 +1,9 @@
 import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
+import { useRecyclingState } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { SymbolView } from "expo-symbols";
-import { memo, useState } from "react";
+import { memo } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 import { channelsTable, streamsTable } from "../../db/schema";
@@ -17,11 +18,12 @@ interface StreamsSelect {
 }
 
 export function ThumbnailImage({ videoId }: ThumbnailImageProps) {
-    const [thumbnailType, setThumbnailType] = useState("maxresdefault");
+    const [thumbnailType, setThumbnailType] = useRecyclingState("maxresdefault", [videoId]);
 
     return (
         <Image
             className="flex-1"
+            recyclingKey={videoId}
             source={`https://img.youtube.com/vi/${videoId}/${thumbnailType}.jpg`}
             contentFit="cover"
             onError={() => setThumbnailType("hqdefault")}    // Fallback to hqdefault (since it's a confirmed quality) on failure

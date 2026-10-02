@@ -1,7 +1,8 @@
 import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
 import { Checkbox, Host } from "@expo/ui";
-import { memo, useState } from "react";
+import { useRecyclingState } from "@shopify/flash-list";
+import { memo } from "react";
 import { View } from "react-native";
 import { channelsTable } from "../../db/schema";
 
@@ -16,7 +17,7 @@ interface StreamerSelectProps {
 export const StreamerSelect = memo(function StreamerSelect(
     { height, channel, enabled, onLayout, onChange }: StreamerSelectProps
 ) {
-    const [imageError, setImageError] = useState(false);
+    const [imageError, setImageError] = useRecyclingState(false, [channel.youtube_id]);
 
     return (
         <View
@@ -34,6 +35,7 @@ export const StreamerSelect = memo(function StreamerSelect(
                     <Image
                         className="flex-1 rounded-full"
                         source={channel.profile_picture}
+                        recyclingKey={channel.youtube_id}
                         contentFit="cover"
                         onError={(e) => {
                             console.log(e.error)
