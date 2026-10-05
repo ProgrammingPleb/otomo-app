@@ -1,11 +1,12 @@
 import { AppChannel, AppVideo, NotificationStatus } from "@/model/app";
 import { SettingsData } from "@/model/settings";
-import { and, eq, gte, inArray, isNull, lt, notInArray, notLike, or, sql } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, isNotNull, lt, notInArray, notLike, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import * as SQLite from "expo-sqlite";
 import { channelsTable, favoritesTable, lastCheckedTable, settingsTable, streamsTable } from "../../db/schema";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
 export const DB_NAME = "otomo";
 export const expo = SQLite.openDatabaseSync(DB_NAME, { enableChangeListener: true });
 export const db = drizzle(expo);
@@ -40,11 +41,12 @@ export function activeStreamsFilter(currentTime: number) {
                 eq(streamsTable.ended, 0),  // Filter the streams that have ended
                 and(
                     notLike(streamsTable.title, "%Station"),  // Filter streams that are stations
-                    or(
-                        gte(streamsTable.start_scheduled, currentTime - (3 * 24 * 60 * 60 * 1000)),        // but make sure only ones that are confirmed to be stations (stream longer than 3 days)
-                        isNull(streamsTable.start_scheduled)
-                    ),
-                    lt(streamsTable.start_scheduled, currentTime + 7 * 24 * 60 * 60 * 1000)           // and also filter out waiting rooms
+                    gte(streamsTable.start_scheduled, currentTime - (3 * DAY_MS)),        // but make sure only ones that are confirmed to be stations (stream longer than 3 days)
+                    lt(streamsTable.start_scheduled, currentTime + 7 * DAY_MS)           // and also filter out waiting rooms
+                ),
+                or(
+                    isNotNull(streamsTable.start_actual),
+                    gt(streamsTable.start_scheduled, currentTime - 1.5 * DAY_MS)         // filter out scheduled streams that haven't started 1.5 days after their scheduled time
                 )
             )
         );
