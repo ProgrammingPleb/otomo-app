@@ -2,6 +2,7 @@ import OtomoLogo from "@/assets/images/github-icon.png";
 import { Image } from "@/components/image";
 import { SettingsSwitch } from "@/components/settings";
 import { AppText as Text } from "@/components/text";
+import { UpdateBox } from "@/components/update";
 import '@/global.css';
 import { SettingsData } from "@/model/settings";
 import { DEFAULT_SETTINGS, getSettings, setSettings } from "@/utils/db";
@@ -15,7 +16,6 @@ import { Pressable, ScrollView, View } from "react-native";
 export default function SettingsTab() {
   const router = useRouter();
   const [originalSettings, setOriginalSettings] = useState<SettingsData>(DEFAULT_SETTINGS);
-
   const manualSettingsSet = useRef(false);
   const [dataFetchActive, setDataFetchActive] = useState(false);
 
@@ -99,7 +99,7 @@ export default function SettingsTab() {
             </View>
           </View>
         </View>
-        <View className="flex gap-2 py-3">
+        <View className="flex gap-2 py-3 mb-4">
           <Text className="text-2xl text-on-surface" weight="bold">Settings</Text>
           <SettingsSwitch
             title="Background Refresh"
@@ -115,6 +115,7 @@ export default function SettingsTab() {
             enabled={dataFetchActive}
           />
         </View>
+        <UpdateBox />
       </ScrollView>
     </View>
   );
