@@ -19,18 +19,28 @@ interface StreamsSelect {
     channels: typeof channelsTable.$inferSelect;
 }
 
+const failedImages = new Set<string>();
+
 export function ThumbnailImage({ videoId, placeholder }: ThumbnailImageProps) {
-    const [thumbnailType, setThumbnailType] = useRecyclingState("maxresdefault", [videoId]);
+    const [thumbnailType, setThumbnailType] = useRecyclingState(
+        failedImages.has(videoId) ? "hqdefault" : "maxresdefault",
+        [videoId]
+    );
 
     return (
         <Image
             className="flex-1"
             recyclingKey={videoId}
+            cachePolicy="memory-disk"
+            transition={100}
             placeholder={placeholder ? { thumbhash: placeholder } as ImageSource : null}
             placeholderContentFit="cover"
             source={`https://img.youtube.com/vi/${videoId}/${thumbnailType}.jpg`}
             contentFit="cover"
-            onError={() => setThumbnailType("hqdefault")}    // Fallback to hqdefault (since it's a confirmed quality) on failure
+            onError={() => {
+                setThumbnailType("hqdefault");
+                failedImages.add(videoId);
+            }}    // Fallback to hqdefault (since it's a confirmed quality) on failure
         />
     );
 }
@@ -54,7 +64,7 @@ export const StreamCard = memo(
                         Linking.openURL(`https://www.youtube.com/watch?v=${video.streams.video_id}`);
                     }}
                 >
-                    <View className="aspect-video bg-primary">
+                    <View className="aspect-video bg-primary-container">
                         <ThumbnailImage
                             videoId={video.streams.video_id}
                             placeholder={video.streams.thumbhash}
@@ -69,6 +79,7 @@ export const StreamCard = memo(
                                         className="flex-1"
                                         source={video.channels.profile_picture}
                                         contentFit="cover"
+                                        recyclingKey={video.channels.youtube_id}
                                     />
                                 </View>
                                 <View className="flex-row gap-1">
