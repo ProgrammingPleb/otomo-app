@@ -6,7 +6,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
-import Updates from "expo-updates";
+import { checkForUpdateAsync, fetchUpdateAsync } from "expo-updates";
 import { useEffect, useMemo } from "react";
 import { AppState } from 'react-native';
 import Notifee from "react-native-notify-kit";
@@ -34,10 +34,10 @@ export default function RootLayout() {
           console.error("Notification: Unable to open pending stream!", e)
         )
         if (!__DEV__) {
-          Updates.checkForUpdateAsync()
+          checkForUpdateAsync()
             .then((value) => {
               if (value.isAvailable) {
-                Updates.fetchUpdateAsync().catch((e) =>
+                fetchUpdateAsync().catch((e) =>
                   console.error("Updates: Unable to download the latest update from Expo!", e)
                 )
               }

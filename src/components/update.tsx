@@ -1,5 +1,5 @@
 import { AndroidSymbol, SymbolView } from "expo-symbols";
-import Updates, { useUpdates } from "expo-updates";
+import { reloadAsync, useUpdates } from "expo-updates";
 import { Pressable, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 import { AppText as Text } from "./text";
@@ -64,7 +64,7 @@ export function UpdateBox() {
                     <Pressable
                         className="rounded-md p-2 bg-secondary self-start flex-row items-center gap-2 mt-1"
                         android_ripple={{ color: `${onSecondary}55` }}
-                        onPress={() => Updates.reloadAsync()}
+                        onPress={() => reloadAsync()}
                     >
                         <SymbolView
                             tintColor={onSecondary}
