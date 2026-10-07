@@ -1,14 +1,17 @@
 import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
+import { useRecyclingState } from "@shopify/flash-list";
 import { format } from "date-fns";
+import { ImageSource } from "expo-image";
 import { SymbolView } from "expo-symbols";
-import { memo, useState } from "react";
+import { memo } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 import { channelsTable, streamsTable } from "../../db/schema";
 
 interface ThumbnailImageProps {
     videoId: string;
+    placeholder: string | null;
 }
 
 interface StreamsSelect {
@@ -16,15 +19,28 @@ interface StreamsSelect {
     channels: typeof channelsTable.$inferSelect;
 }
 
-export function ThumbnailImage({ videoId }: ThumbnailImageProps) {
-    const [thumbnailType, setThumbnailType] = useState("maxresdefault");
+const failedImages = new Set<string>();
+
+export function ThumbnailImage({ videoId, placeholder }: ThumbnailImageProps) {
+    const [thumbnailType, setThumbnailType] = useRecyclingState(
+        failedImages.has(videoId) ? "hqdefault" : "maxresdefault",
+        [videoId]
+    );
 
     return (
         <Image
             className="flex-1"
+            recyclingKey={videoId}
+            cachePolicy="memory-disk"
+            transition={100}
+            placeholder={placeholder ? { thumbhash: placeholder } as ImageSource : null}
+            placeholderContentFit="cover"
             source={`https://img.youtube.com/vi/${videoId}/${thumbnailType}.jpg`}
             contentFit="cover"
-            onError={() => setThumbnailType("hqdefault")}    // Fallback to hqdefault (since it's a confirmed quality) on failure
+            onError={() => {
+                setThumbnailType("hqdefault");
+                failedImages.add(videoId);
+            }}    // Fallback to hqdefault (since it's a confirmed quality) on failure
         />
     );
 }
@@ -33,24 +49,26 @@ interface StreamCardProps {
     video: StreamsSelect;
     isFavorited: boolean;
     scheduled: boolean;
+    isTabletMode: boolean;
 }
 
 export const StreamCard = memo(
-    function StreamCard({ video, isFavorited, scheduled }: StreamCardProps) {
+    function StreamCard({ video, isFavorited, scheduled, isTabletMode }: StreamCardProps) {
         const secondary = useCSSVariable("--color-secondary") as string;
         const tertiary = useCSSVariable("--color-tertiary") as string;
 
         return (
-            <View className="rounded-lg overflow-hidden mt-4">
+            <View className={`rounded-lg overflow-hidden mt-4 ${isTabletMode ? "mx-4" : ""}`}>
                 <Pressable
                     android_ripple={{ color: `${secondary}55`, foreground: true }}
                     onPress={() => {
                         Linking.openURL(`https://www.youtube.com/watch?v=${video.streams.video_id}`);
                     }}
                 >
-                    <View className="aspect-video bg-primary">
+                    <View className="aspect-video bg-primary-container">
                         <ThumbnailImage
                             videoId={video.streams.video_id}
+                            placeholder={video.streams.thumbhash}
                         />
                     </View>
                     <View className="flex flex-row bg-secondary-container px-4 pt-3 pb-4 items-center gap-2">
@@ -62,6 +80,7 @@ export const StreamCard = memo(
                                         className="flex-1"
                                         source={video.channels.profile_picture}
                                         contentFit="cover"
+                                        recyclingKey={video.channels.youtube_id}
                                     />
                                 </View>
                                 <View className="flex-row gap-1">

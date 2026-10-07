@@ -3,7 +3,7 @@
     "name": "Otomo",
     "slug": "otomo-app",
     "version": "1.0.0-beta3",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "otomoapp",
     "userInterfaceStyle": "automatic",

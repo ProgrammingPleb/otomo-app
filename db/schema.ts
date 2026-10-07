@@ -12,11 +12,14 @@ export const channelsTable = sqliteTable("channels", {
     name: text().notNull(),
     romaji: text(),
     profile_picture: text().notNull(),
+    profile_hash: text(),
     group_name: text(),
     major_group: text(),
     inactive: int().notNull(),
     is_group_channel: int().notNull(),
-    organization: text().notNull()
+    organization: text().notNull(),
+    banner: text(),
+    banner_hash: text()
 });
 
 export const streamsTable = sqliteTable("streams", {
@@ -27,6 +30,7 @@ export const streamsTable = sqliteTable("streams", {
     start_scheduled: int(),
     start_actual: int(),
     ended: int().notNull(),
+    thumbhash: text(),
     notification: text({ enum: ["soon", "now", "none"] }).notNull().default("none")
 });
 

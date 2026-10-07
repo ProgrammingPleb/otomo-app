@@ -8,11 +8,12 @@ import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, useWindowDimensions, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 import { channelsTable, favoritesTable } from "../../db/schema";
 
 export default function AddFavoritesPage() {
+    const window = useWindowDimensions();
     const router = useRouter();
     const onPrimary = useCSSVariable("--color-on-primary") as string;
     const [searchTerm, setSearchTerm] = useState("");
@@ -61,6 +62,8 @@ export default function AddFavoritesPage() {
     return (
         <View className="flex-1 bg-surface pt-safe pb-safe overflow-hidden">
             <FlashList
+                masonry
+                numColumns={window.width < 600 ? 1 : 2}
                 ref={listRef}
                 maintainVisibleContentPosition={{ disabled: true }}
                 contentContainerClassName="px-4 pb-4"
@@ -99,6 +102,7 @@ export default function AddFavoritesPage() {
                         height={threeLvlHeight}
                         channel={item}
                         enabled={favoritedChannels.has(item.id)}
+                        isTabletMode={window.width >= 600}
                         onLayout={(height) => {
                             if (threeLvlHeight == 0) {
                                 setThreeLvlHeight(height);
