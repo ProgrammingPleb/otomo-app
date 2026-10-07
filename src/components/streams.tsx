@@ -49,15 +49,16 @@ interface StreamCardProps {
     video: StreamsSelect;
     isFavorited: boolean;
     scheduled: boolean;
+    isTabletMode: boolean;
 }
 
 export const StreamCard = memo(
-    function StreamCard({ video, isFavorited, scheduled }: StreamCardProps) {
+    function StreamCard({ video, isFavorited, scheduled, isTabletMode }: StreamCardProps) {
         const secondary = useCSSVariable("--color-secondary") as string;
         const tertiary = useCSSVariable("--color-tertiary") as string;
 
         return (
-            <View className="rounded-lg overflow-hidden mt-4">
+            <View className={`rounded-lg overflow-hidden mt-4 ${isTabletMode ? "mx-4" : ""}`}>
                 <Pressable
                     android_ripple={{ color: `${secondary}55`, foreground: true }}
                     onPress={() => {

@@ -1,4 +1,4 @@
-import { Image } from "@/components/image";
+import { FavoritedGroup } from "@/components/favorites";
 import { AppText as Text } from "@/components/text";
 import '@/global.css';
 import { db } from "@/utils/db";
@@ -7,7 +7,7 @@ import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useMemo, useState } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { Pressable, useWindowDimensions, View } from "react-native";
 import Animated, { useAnimatedScrollHandler, useSharedValue, withSpring } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
 import { useCSSVariable } from "uniwind";
@@ -16,8 +16,8 @@ import { channelsTable, favoritesTable } from "../../../db/schema";
 const SCROLL_THRESHOLD = 4;
 
 export default function FavoritesTab() {
+  const window = useWindowDimensions();
   const router = useRouter();
-  const secondary = useCSSVariable("--color-secondary") as string;
   const onTertiary = useCSSVariable("--color-on-tertiary") as string;
   const { data: favoritesData } = useLiveQuery(
     db.select().from(favoritesTable)
@@ -59,6 +59,24 @@ export default function FavoritesTab() {
 
     return Array.from(data).sort((a, b) => a[0].localeCompare(b[0]));
   }, [favoritesData, majorGroupData]);
+  const splitGroupFavorites = useMemo(() => {
+    const split: typeof groupedFavorites[] = [[], []];
+    let left = 0;
+    let right = 0;
+
+    for (const group of groupedFavorites) {
+      const isOnRight = left > right;
+      split[isOnRight ? 1 : 0].push(group);
+      
+      if (isOnRight) {
+        right = right + group[1].length;
+      } else {
+        left = left + group[1].length;
+      }
+    }
+
+    return split;
+  }, [groupedFavorites]);
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -90,53 +108,35 @@ export default function FavoritesTab() {
           <Text className="text-primary">Show off your oshi list!</Text>
         </View>
 
-        <View className="mt-4 flex-1 gap-6 pb-8">
-          {
-            groupedFavorites.map((group) =>
-              <View className="relative" key={`Favorited Group - ${group[0]}`}>
-                <View className="left-1/2 -translate-x-1/2 absolute z-10">
-                  <View className="px-4 bg-surface" onLayout={(event) => {
-                    if (titleHeight === 0) {
-                      setTitleHeight(event.nativeEvent.layout.height);
-                    }
-                  }}>
-                    <View className="self-start px-4 py-3 rounded-md bg-tertiary-container">
-                      <Text className="text-on-tertiary-container text-lg" weight="bold">{group[0]}</Text>
-                    </View>
-                  </View>
-                </View>
-                <View className="flex-1 gap-4 px-4 pt-9 pb-6 outline outline-outline-variant rounded-md"
-                  style={{ marginTop: titleHeight / 2 }}
-                >
-                  {
-                    group[1].map((row) =>
-                      <Pressable key={`${group[0]} Favorite: ${row.channels.name}`}
-                        className="flex-1 flex-row items-center gap-4 bg-secondary-container px-4 py-3 rounded-md"
-                        android_ripple={{ color: `${secondary}55` }}
-                        onPress={async () => await Linking.openURL(`https://www.youtube.com/channel/${row.channels.youtube_id}`)}
-                      >
-                        <View className="w-12 aspect-square">
-                          <Image
-                            className="flex-1 rounded-full"
-                            source={row.channels.profile_picture}
-                            contentFit="cover"
-                          />
-                        </View>
-                        <View>
-                          <Text className="text-on-secondary-container text-lg" weight="semibold">{row.channels.name}</Text>
-                          {
-                            row.channels.romaji &&
-                            <Text className="-mt-1 opacity-60 text-on-secondary-container">{row.channels.romaji}</Text>
-                          }
-                        </View>
-                      </Pressable>
-                    )
-                  }
-                </View>
-              </View>
-            )
-          }
-        </View>
+        {
+          window.width < 600 &&
+          <View className="mt-4 flex-1 gap-6 pb-8">
+            {
+              groupedFavorites.map((group) =>
+                <FavoritedGroup key={`Favorited Group - ${group[0]}`} group={group} titleHeight={titleHeight} setTitleHeight={setTitleHeight} />
+              )
+            }
+          </View>
+        }
+        {
+          window.width >= 600 &&
+          <View className="flex-row gap-8 mt-4 pb-8">
+            <View className="flex-1 gap-6">
+              {
+                splitGroupFavorites[0].map((group) =>
+                  <FavoritedGroup key={`Favorited Group - ${group[0]}`} group={group} titleHeight={titleHeight} setTitleHeight={setTitleHeight} />
+                )
+              }
+            </View>
+            <View className="flex-1 gap-6">
+              {
+                splitGroupFavorites[1].map((group) =>
+                  <FavoritedGroup key={`Favorited Group - ${group[0]}`} group={group} titleHeight={titleHeight} setTitleHeight={setTitleHeight} />
+                )
+              }
+            </View>
+          </View>
+        }
       </Animated.ScrollView>
       <Animated.View style={{ opacity: fabOpacity }}>
         <Pressable

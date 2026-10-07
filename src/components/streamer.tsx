@@ -11,18 +11,19 @@ interface StreamerSelectProps {
     height: number;
     channel: typeof channelsTable.$inferSelect;
     enabled: boolean;
+    isTabletMode: boolean;
     onLayout: (height: number) => void;
     onChange: (channelId: number, enabled: boolean) => void;
 }
 
 export const StreamerSelect = memo(function StreamerSelect(
-    { height, channel, enabled, onLayout, onChange }: StreamerSelectProps
+    { height, channel, enabled, isTabletMode, onLayout, onChange }: StreamerSelectProps
 ) {
     const [imageError, setImageError] = useRecyclingState(false, [channel.youtube_id]);
 
     return (
         <View
-            className="rounded-md flex-1 flex-row items-center bg-secondary-container p-2 gap-4"
+            className={`rounded-md flex-1 flex-row items-center bg-secondary-container p-2 gap-4 ${isTabletMode ? "mx-4" : ""}`}
             style={{ height: height != 0 ? height : undefined }}
             onLayout={(event) => {
                 if (channel.romaji && channel.group_name) {

@@ -6,11 +6,12 @@ import SegmentedControl from '@expo/ui/community/segmented-control';
 import { FlashList } from "@shopify/flash-list";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshControl, View } from "react-native";
+import { RefreshControl, useWindowDimensions, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 import { favoritesTable } from "../../../db/schema";
 
 export default function HomeTab() {
+  const window = useWindowDimensions();
   const [now, setNow] = useState(Date.now());
   const primary = useCSSVariable("--color-primary") as string;
   const onPrimary = useCSSVariable("--color-on-primary") as string;
@@ -55,6 +56,8 @@ export default function HomeTab() {
   return (
     <View className="flex-1 bg-surface pt-safe overflow-hidden">
       <FlashList
+        masonry
+        numColumns={window.width < 600 ? 1 : 3}
         data={selectedIndex == 0 ? liveStreams : scheduledStreams}
         contentContainerClassName="px-4 pb-4"
         renderItem={({ item: video }) =>
@@ -62,6 +65,7 @@ export default function HomeTab() {
             video={video}
             isFavorited={favoritedChannels.has(video.channels.id)}
             scheduled={video.streams.start_actual == null}
+            isTabletMode={window.width >= 600}
           />
         }
         keyExtractor={(item) => item.streams.video_id}

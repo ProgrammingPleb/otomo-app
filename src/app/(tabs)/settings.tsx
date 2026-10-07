@@ -11,10 +11,11 @@ import { isBackgroundDataFetchActive, registerBackgroundDataFetch, unregisterBac
 import { nativeApplicationVersion } from "expo-application";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 
 export default function SettingsTab() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [originalSettings, setOriginalSettings] = useState<SettingsData>(DEFAULT_SETTINGS);
   const manualSettingsSet = useRef(false);
   const [dataFetchActive, setDataFetchActive] = useState(false);
@@ -82,23 +83,18 @@ export default function SettingsTab() {
   }, []);
 
   return (
-    <View className="flex-1 bg-surface pt-safe">
-      <ScrollView className="flex-1 px-4">
-        <View className="mt-4">
-          <View className="flex-row justify-center items-center gap-4">
-            <Pressable onLongPress={() => router.push("/debug")}>
-              <Image
-                source={OtomoLogo}
-                className="w-28 aspect-square"
-              />
-            </Pressable>
-            <View>
-              <Text className="text-3xl text-on-surface" weight="bold">Otomo</Text>
-              <Text className="text-primary -mt-1">by @ProgrammingPleb</Text>
-              <Text className="text-secondary">v{nativeApplicationVersion}</Text>
-            </View>
-          </View>
+    <View className="flex-1 flex-row gap-4 bg-surface pt-safe">
+      {
+        width >= 600 &&
+        <View className="px-4 justify-center">
+          <AppLogo />
         </View>
+      }
+      <ScrollView className="flex-1 px-4">
+        {
+          width < 600 &&
+          <AppLogo />
+        }
         <View className="flex gap-2 py-3 mb-4">
           <Text className="text-2xl text-on-surface" weight="bold">Settings</Text>
           <SettingsSwitch
@@ -117,6 +113,28 @@ export default function SettingsTab() {
         </View>
         <UpdateBox />
       </ScrollView>
+    </View>
+  );
+}
+
+function AppLogo() {
+  const router = useRouter();
+
+  return (
+    <View className="mt-4">
+      <View className="flex-row justify-center items-center gap-4">
+        <Pressable onLongPress={() => router.push("/debug")}>
+          <Image
+            source={OtomoLogo}
+            className="w-28 aspect-square"
+          />
+        </Pressable>
+        <View>
+          <Text className="text-3xl text-on-surface" weight="bold">Otomo</Text>
+          <Text className="text-primary -mt-1">by @ProgrammingPleb</Text>
+          <Text className="text-secondary">v{nativeApplicationVersion}</Text>
+        </View>
+      </View>
     </View>
   );
 }
