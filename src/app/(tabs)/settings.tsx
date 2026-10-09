@@ -85,14 +85,14 @@ export default function SettingsTab() {
   return (
     <View className="flex-1 flex-row gap-4 bg-surface pt-safe">
       {
-        width >= 600 &&
+        width >= 768 &&
         <View className="px-4 justify-center">
           <AppLogo />
         </View>
       }
       <ScrollView className="flex-1 px-4">
         {
-          width < 600 &&
+          width < 768 &&
           <AppLogo />
         }
         <View className="flex gap-2 py-3 mb-4">

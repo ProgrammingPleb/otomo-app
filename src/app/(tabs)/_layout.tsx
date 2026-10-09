@@ -14,11 +14,11 @@ export default function TabLayout() {
     return (
         <>
             {
-                width < 600 &&
+                width < 768 &&
                 <PhoneLayout />
             }
             {
-                Platform.OS == "android" && width >= 600 &&
+                Platform.OS == "android" && width >= 768 &&
                 <TabletNavProvider>
                     <AndroidTabletLayout />
                 </TabletNavProvider>

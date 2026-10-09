@@ -57,7 +57,7 @@ export default function HomeTab() {
     <View className="flex-1 bg-surface pt-safe overflow-hidden">
       <FlashList
         masonry
-        numColumns={window.width < 600 ? 1 : 3}
+        numColumns={window.width < 768 ? 1 : 3}
         data={selectedIndex == 0 ? liveStreams : scheduledStreams}
         contentContainerClassName="px-4 pb-4"
         renderItem={({ item: video }) =>
@@ -65,7 +65,7 @@ export default function HomeTab() {
             video={video}
             isFavorited={favoritedChannels.has(video.channels.id)}
             scheduled={video.streams.start_actual == null}
-            isTabletMode={window.width >= 600}
+            isTabletMode={window.width >= 768}
           />
         }
         keyExtractor={(item) => item.streams.video_id}

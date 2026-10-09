@@ -109,7 +109,7 @@ export default function FavoritesTab() {
         </View>
 
         {
-          window.width < 600 &&
+          window.width < 768 &&
           <View className="mt-4 flex-1 gap-6 pb-8">
             {
               groupedFavorites.map((group) =>
@@ -119,7 +119,7 @@ export default function FavoritesTab() {
           </View>
         }
         {
-          window.width >= 600 &&
+          window.width >= 768 &&
           <View className="flex-row gap-8 mt-4 pb-8">
             <View className="flex-1 gap-6">
               {
