@@ -20,7 +20,7 @@ export default function DebugPage() {
 
     return (
         <View className="flex-1 py-safe bg-surface">
-            <ScrollView contentContainerClassName="gap-4 px-4">
+            <ScrollView contentContainerClassName="gap-4 px-4 pt-2">
                 <View className="flex-row gap-3">
                     <Pressable
                         className="self-center rounded-md p-2 bg-primary"

@@ -83,7 +83,7 @@ export default function SettingsTab() {
   }, []);
 
   return (
-    <View className="flex-1 flex-row gap-4 bg-surface pt-safe">
+    <View className="flex-1 flex-row gap-4 bg-surface pt-safe-offset-2">
       {
         width >= 768 &&
         <View className="px-4 justify-center">

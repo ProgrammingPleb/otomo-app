@@ -5153,10 +5153,10 @@ unimodules-app-loader@~57.0.2:
   resolved "https://registry.yarnpkg.com/unimodules-app-loader/-/unimodules-app-loader-57.0.2.tgz#950a025d13c71c6202069447c10466dcba606001"
   integrity sha512-1Ja+r1VR556m1cTn4BBwAe0AQpX8mDobvN+6Kx12h0jqf0euHfvkPHg83ijuC7pWHff9vTOUc7qr5t8vnmnljg==
 
-uniwind@^1.12.0:
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/uniwind/-/uniwind-1.12.0.tgz#6972a66abd09a1dc5d66f93fea0e534eb1d8deca"
-  integrity sha512-/A2Mhq8IExb8dYrRotNWJ36FfbWbLSaDKQCy1ebrdKwh/UGzte5J83/Z/Efi6Q2fz/+yXzFrx8j69jm+YYz1lg==
+uniwind@^1.13.1:
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/uniwind/-/uniwind-1.13.1.tgz#d7fb546470c4be24257cb51493594c5ae0be75aa"
+  integrity sha512-065lxFxvaQmfl9mdD6mNjm4+tqu6Q3ZlA/6TD+CPm26XK4cTuVMyVGBSKHE7Q9nKjtR2INcwjJE7J1VaqGbuoQ==
   dependencies:
     "@tailwindcss/node" "4.3.3"
     "@tailwindcss/oxide" "4.3.3"

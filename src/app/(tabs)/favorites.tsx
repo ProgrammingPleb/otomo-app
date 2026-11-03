@@ -102,7 +102,7 @@ export default function FavoritesTab() {
 
   return (
     <View className="flex-1 bg-surface pt-safe overflow-hidden">
-      <Animated.ScrollView className="flex-1 px-4" onScroll={handleScroll}>
+      <Animated.ScrollView className="flex-1 px-4 pt-2" onScroll={handleScroll}>
         <View>
           <Text className="text-on-surface text-3xl" weight="bold">Favorites</Text>
           <Text className="text-primary">Show off your oshi list!</Text>

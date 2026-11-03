@@ -59,7 +59,7 @@ export default function HomeTab() {
         masonry
         numColumns={window.width < 768 ? 1 : 3}
         data={selectedIndex == 0 ? liveStreams : scheduledStreams}
-        contentContainerClassName="px-4 pb-4"
+        contentContainerClassName="px-4 pb-4 pt-2"
         renderItem={({ item: video }) =>
           <StreamCard
             video={video}
