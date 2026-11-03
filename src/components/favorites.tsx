@@ -1,6 +1,7 @@
 import { Image } from "@/components/image";
 import { AppText as Text } from "@/components/text";
-import { Linking, Pressable, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, View } from "react-native";
 import { useCSSVariable } from "uniwind";
 
 interface FavoritedGroupProps {
@@ -46,7 +47,8 @@ export function FavoritedGroup({ group, titleHeight, setTitleHeight }: Favorited
                         <Pressable key={`${group[0]} Favorite: ${row.channels.name}`}
                             className="flex-1 flex-row items-center gap-4 bg-secondary-container px-4 py-3 rounded-md"
                             android_ripple={{ color: `${secondary}55` }}
-                            onPress={async () => await Linking.openURL(`https://www.youtube.com/channel/${row.channels.youtube_id}`)}
+                            /* onPress={async () => await Linking.openURL(`https://www.youtube.com/channel/${row.channels.youtube_id}`)} */
+                            onPress={() => router.push(`/channel/${row.channels.youtube_id}`)}
                         >
                             <View className="w-12 aspect-square">
                                 <Image

@@ -94,6 +94,7 @@ function AppNavStack() {
           <Stack.Screen name="add_favorites" />
           <Stack.Screen name="notifications/settings_prompt" />
           <Stack.Screen name="debug" />
+          <Stack.Screen name="channel/[id]" />
         </Stack.Protected>
       </Stack.Protected>
     </Stack>

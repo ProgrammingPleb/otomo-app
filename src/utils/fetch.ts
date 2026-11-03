@@ -1,4 +1,5 @@
 import { AppChannel, AppVideo } from "@/model/app";
+import { BackendChannelRecents } from "@/model/backend";
 import { BACKEND_URL } from "@/utils/env";
 import { isRefreshPossible, updateLastCheckedTime } from "./db";
 
@@ -79,4 +80,10 @@ export async function getOneChannel(channelId: string) {
     const channels = await fetchBackendData<AppChannel>(`/channels/${channelId}`);
 
     return channels;
+}
+
+export async function getChannelRecents(channelId: string) {
+    const recents = await fetchBackendData<BackendChannelRecents>(`/channels/${channelId}/recents`);
+
+    return recents;
 }
